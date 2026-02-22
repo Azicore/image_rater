@@ -2,6 +2,44 @@
 <html>
 <head>
 <title>Image Rater</title>
+<script>
+window.addEventListener('DOMContentLoaded', function() {
+	const elDirs = document.getElementById('directories');
+	const elList = document.getElementById('list');
+
+	const initialize = async () => {
+		const dirs = await (await fetch('/dirs')).json();
+		for (const dirId in dirs) {
+			const subdirs = await (await fetch(`/dir/${dirId}`)).json();
+			let subdirHtml = '';
+			for (const subdirId in subdirs) {
+				subdirHtml = `${subdirHtml}<li data-dir-id="${dirId}" data-subdir-id="${subdirId}">${subdirs[subdirId]}</li>`;
+			}
+			elDirs.insertAdjacentHTML('beforeend', `<li data-dir-id="${dirId}"><p>${dirs[dirId]}</p><ul>${subdirHtml}</ul></li>`);
+		}
+	};
+	initialize();
+
+	elDirs.addEventListener('click', async (e) => {
+		const subdirId = e.target.getAttribute('data-subdir-id');
+		if (!subdirId) return;
+		const dirId = e.target.getAttribute('data-dir-id');
+		const subdirName = e.target.innerText;
+		const files = await (await fetch(`/dir/${dirId}/${subdirId}`)).json();
+		console.dir(files);
+		elList.innerHTML = '';
+		for (const fileId in files) {
+			const file = files[fileId];
+			// width= height=が必要
+			elList.insertAdjacentHTML('beforeend', `<li><img loading="lazy" src="/file/${dirId}/${subdirName}/${file.name}" style="max-height: 300px; margin-right: 8px"></li>`);
+		}
+	});
+});
+
+</script>
 </head>
-<body>OK</body>
+<body>
+<ul id="directories"></ul>
+<ul id="list" style="display: flex; flex-wrap: wrap; list-style-type: none"></ul>
+</body>
 </html>
