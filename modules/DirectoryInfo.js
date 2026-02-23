@@ -2,50 +2,33 @@ import path from 'path';
 import fs from 'fs';
 import UniqueId from './UniqueId.js';
 import MediaFile from './MediaFile.js';
+import DataFileLoader from './DataFileLoader.js';
 
 /**
  * 親ディレクトリごとのデータファイルを操作するためのクラス
  */
-export default class DirectoryInfo {
+export default class DirectoryInfo extends DataFileLoader {
 
 	/**
 	 * コンストラクタ
 	 * @param {string} dirPath - 親ディレクトリのパス
+	 * @param {ThumbnailManager} thumb - ThumbnailManagerオブジェクト
 	 */
-	constructor(dirPath) {
+	constructor(dirPath, thumb) {
+		super();
 		/**
 		 * 親ディレクトリのパス
 		 * @type {string}
 		 */
-		this.dirPath = dirPath;
-		/**
-		 * データファイルのパス
-		 * @type {string}
+		 this.dirPath = dirPath;
+		 /**
+		 * ThumbnailManagerオブジェクト
+		 * @type {ThumbnailManager}
 		 */
-		this.DATA_FILE = path.join(dirPath, '.imgrater.json');
+		this.thumb = thumb;
 
-		this._load();
-	}
-
-	/**
-	 * データファイルを読み込む
-	 */
-	_load() {
-		/**
-		 * データファイルの内容
-		 * @type {object}
-		 */
-		this.data = {};
-		try {
-			this.data = JSON.parse(fs.readFileSync(this.DATA_FILE));
-		} catch (e) { }
-	}
-
-	/**
-	 * データファイルを保存する
-	 */
-	_save() {
-		fs.writeFileSync(this.DATA_FILE, JSON.stringify(this.data));
+		// データファイルの読み込み
+		this._load(path.join(dirPath, '.imgrater.json'));
 	}
 
 	/**
@@ -91,44 +74,51 @@ export default class DirectoryInfo {
 		const fileNames = [];
 		const files = {};
 		const subdir = this.data[subdirId];
+		const thumbUpdate = {};
 		if (!this.data[subdirId]) return files;
 		const subdirName = subdir.name;
 		// 存在チェック
 		for (const fileId in subdir.files) {
 			const file = subdir.files[fileId];
-			const fileName = file.name;
-			if (fs.existsSync(path.join(this.dirPath, subdirName, fileName))) {
+			const fileName = file.n;
+			const filePath = path.join(this.dirPath, subdirName, fileName);
+			const stats = fs.statSync(filePath, { throwIfNoEntry: false });
+			// ファイルに変更がない場合のみ既存扱い
+			if (stats && stats.size == file.s && Math.floor(stats.mtimeMs / 1000) == file.m) {
 				fileNames.push(fileName);
 				files[fileId] = file;
+			// 存在しないものと変更されたものは除外
 			} else {
-				// 存在しないものは除外
 				delete subdir.files[fileId];
+				thumbUpdate[fileId] = null;
 			}
 		}
 		// 新規チェック
 		const itemList = fs.readdirSync(path.join(this.dirPath, subdirName));
 		const imageSizePromise = [];
 		for (const item of itemList) {
+			if (fileNames.includes(item)) continue;
+			if (!/\.(jpe?g|jpe|png|gif|svg|webp)$/i.test(item)) continue;
 			const filePath = path.join(this.dirPath, subdirName, item);
 			const stats = fs.statSync(filePath);
 			if (!stats.isFile()) continue;
-			if (fileNames.includes(item)) continue;
-			if (!/\.(jpe?g|jpe|png|gif|svg|webp)$/i.test(item)) continue;
-			const newId = UniqueId.get();
-			imageSizePromise.push(new MediaFile(filePath, { fileId: newId }).getSize());
-			subdir.files[newId] = {
-				name: item,
-				size: stats.size,
-				modified: stats.mtime
+			const fileId = UniqueId.get();
+			imageSizePromise.push(new MediaFile(filePath).getSize({ fileId, filePath }));
+			subdir.files[fileId] = {
+				n: item,
+				s: stats.size,
+				m: Math.floor(stats.mtimeMs / 1000)
 			};
-			files[newId] = subdir.files[newId];
+			files[fileId] = subdir.files[fileId];
 		}
 		const imageSize = await Promise.all(imageSizePromise);
 		for (const s of imageSize) {
-			const { fileId, width, height } = s;
-			files[fileId].width = width;
-			files[fileId].height = height;
+			const { fileId, filePath, width: w, height: h } = s;
+			const { width: tw, height: th } = this.thumb.getThumbnailSize(w, h);
+			files[fileId] = Object.assign(files[fileId], { w, h, tw, th });
+			thumbUpdate[fileId] = { fileId, filePath, width: tw, height: th };
 		}
+		this.thumb.update(thumbUpdate);
 		this._save();
 		return files;
 	}

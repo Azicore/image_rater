@@ -47,23 +47,13 @@ window.addEventListener('DOMContentLoaded', function() {
 		const files = await (await fetch(`/dir/${dirId}/${subdirId}`)).json();
 		console.dir(files);
 		elList.innerHTML = '';
-		const getPreviewImgSize = ({ width, height }) => {
-			const baseSize = 200;
-			const maxSize = 360;
-			const ratio = height / width;
-			if (height > width) {
-				height = Math.min(baseSize * ratio, maxSize);
-				width = height / ratio;
-			} else {
-				width = Math.min(baseSize / ratio, maxSize);
-				height = width * ratio;
-			}
-			return [width, height];
-		};
 		for (const fileId in files) {
 			const file = files[fileId];
-			const [w, h] = getPreviewImgSize(file);
-			elList.insertAdjacentHTML('beforeend', `<li><img loading="lazy" src="/file/${dirId}/${subdirName}/${file.name}" width="${w}" height="${h}"></li>`);
+			elList.insertAdjacentHTML('beforeend', `<li>
+				<a href="/file/${dirId}/${subdirName}/${file.n}">
+					<img loading="lazy" src="/thumb/${fileId}" width="${file.tw}" height="${file.th}" alt="${file.n}" title="${file.n}">
+				</a>
+			</li>`);
 		}
 	});
 });

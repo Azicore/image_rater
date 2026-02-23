@@ -2,6 +2,7 @@ import path from 'path';
 import express from 'express';
 import Config from './modules/Config.js';
 import DirectoryInfo from './modules/DirectoryInfo.js';
+import ThumbnailManager from './modules/ThumbnailManager.js';
 
 const __dirname = import.meta.dirname;
 
@@ -9,8 +10,8 @@ const SERVER_PORT = 8052; // ウェブサーバーのポート番号
 
 // 設定ファイルの読み込み
 const config = new Config();
-config.load();
-console.log(config.settings);
+console.log(config.data.settings);
+const thumb = new ThumbnailManager();
 
 const app = express();
 
@@ -22,17 +23,17 @@ app.use('/', (req, res, next) => {
 // 登録済み親ディレクトリ一覧を返す
 app.get('/dirs', (req, res, next) => {
 	console.log('GET /dirs');
-	res.json(config.directories);
+	res.json(config.data.directories);
 });
 
 // サブディレクトリ一覧・ファイル一覧を返す
 app.get(['/dir/:dirId', '/dir/:dirId/:subdirId'], async (req, res, next) => {
 	const { dirId, subdirId } = req.params;
-	const dirPath = config.directories[dirId];
+	const dirPath = config.data.directories[dirId];
 	if (dirPath == null) {
 		return res.json({ error: true });
 	}
-	const dirInfo = new DirectoryInfo(dirPath);
+	const dirInfo = new DirectoryInfo(dirPath, thumb);
 	// サブディレクトリ内のファイル一覧
 	if (subdirId) {
 		console.log(`GET /dir/${dirId}/${subdirId}`);
@@ -44,16 +45,22 @@ app.get(['/dir/:dirId', '/dir/:dirId/:subdirId'], async (req, res, next) => {
 	}
 });
 
-app.get('/thumb/:dirId/:subdirId/:fileId', (req, res, next) => {
-	// config.jsonのthumbnailsを参照する
-	// あれば画像データを返す
-	// 無ければdirPath/.rater.jsonを参照してファイルを開きサムネイルを作成する
+app.get('/thumb/:fileId', async (req, res, next) => {
+	const { fileId } = req.params;
+	const thumbName = await thumb.get(fileId);
+	if (thumbName) {
+		res.sendFile(thumbName, { root: thumb.THUMB_DIR }, (err) => {
+			if (err) res.sendStatus(404);
+		});
+	} else {
+		res.sendStatus(404);
+	}
 });
 
 // 画像ファイル本体を返す
 app.get('/file/:dirId/:subdirName/:fileName', (req, res, next) => {
 	const { dirId, subdirName, fileName } = req.params;
-	const dirPath = config.directories[dirId];
+	const dirPath = config.data.directories[dirId];
 	if (dirPath == null) {
 		return res.sendStatus(404);
 	}

@@ -8,7 +8,6 @@ export default class MediaFile {
 	/**
 	 * コンストラクタ
 	 * @param {string} filePath - ファイルパス
-	 * @param {object} info - getSize()の戻り値に含める値
 	 */
 	constructor(filePath, info) {
 		/**
@@ -16,11 +15,6 @@ export default class MediaFile {
 		 * @type {string}
 		 */
 		this.filePath = filePath;
-		/**
-		 * getSize()の戻り値に含める値
-		 * @type {object}
-		 */
-		this.info = info || {};
 	}
 
 	get isImage() {
@@ -35,15 +29,17 @@ export default class MediaFile {
 	 * 画像のサイズを返す
 	 * @return {object} width・heightを持つオブジェクト
 	 */
-	async getSize() {
+	async getSize(additionalInfo = {}) {
 		if (!this._metadata) {
 			this._metadata = await sharp(this.filePath).metadata();
+			console.log(`getSize: ${this.filePath}`);
 		}
-		return Object.assign({}, this.info, this._metadata);
+		return Object.assign({}, additionalInfo, this._metadata);
 	}
 
-	async createThumb() {
-		const { width, height } = await this.getSize();
+	async createThumbnail(outputPath, width, height) {
+		console.log(`createThumbnail: ${this.filePath}`);
+		await sharp(this.filePath).resize(width, height).webp({ quality: 80 }).toFile(outputPath);
 	}
 
 }
