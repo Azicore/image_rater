@@ -26,7 +26,7 @@ app.get('/dirs', (req, res, next) => {
 });
 
 // サブディレクトリ一覧・ファイル一覧を返す
-app.get(['/dir/:dirId', '/dir/:dirId/:subdirId'], (req, res, next) => {
+app.get(['/dir/:dirId', '/dir/:dirId/:subdirId'], async (req, res, next) => {
 	const { dirId, subdirId } = req.params;
 	const dirPath = config.directories[dirId];
 	if (dirPath == null) {
@@ -36,11 +36,11 @@ app.get(['/dir/:dirId', '/dir/:dirId/:subdirId'], (req, res, next) => {
 	// サブディレクトリ内のファイル一覧
 	if (subdirId) {
 		console.log(`GET /dir/${dirId}/${subdirId}`);
-		res.json(dirInfo.getFileList(subdirId));
+		res.json(await dirInfo.getFileList(subdirId));
 	// 親ディレクトリ内のサブディレクトリ一覧
 	} else {
 		console.log(`GET /dir/${dirId}`);
-		res.json(dirInfo.getSubdirList());
+		res.json(await dirInfo.getSubdirList());
 	}
 });
 
@@ -57,7 +57,7 @@ app.get('/file/:dirId/:subdirName/:fileName', (req, res, next) => {
 	if (dirPath == null) {
 		return res.sendStatus(404);
 	}
-	console.log(`GET /file/${dirId}/${subdirName}/${fileName}`);
+//	console.log(`GET /file/${dirId}/${subdirName}/${fileName}`);
 	res.sendFile(fileName, { root: path.join(dirPath, subdirName) }, (err) => {
 		if (err) res.sendStatus(404);
 	});

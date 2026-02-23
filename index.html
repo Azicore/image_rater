@@ -1,7 +1,26 @@
 <!doctype html>
-<html>
+<html lang="ja">
 <head>
+<meta charset="utf-8">
 <title>Image Rater</title>
+<style>
+* {
+
+}
+body {
+	background: #111111;
+	color: #f0f0f0;
+}
+#list {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	list-style-type: none;
+}
+#list img {
+	margin-right: 8px;
+}
+</style>
 <script>
 window.addEventListener('DOMContentLoaded', function() {
 	const elDirs = document.getElementById('directories');
@@ -28,10 +47,23 @@ window.addEventListener('DOMContentLoaded', function() {
 		const files = await (await fetch(`/dir/${dirId}/${subdirId}`)).json();
 		console.dir(files);
 		elList.innerHTML = '';
+		const getPreviewImgSize = ({ width, height }) => {
+			const baseSize = 200;
+			const maxSize = 360;
+			const ratio = height / width;
+			if (height > width) {
+				height = Math.min(baseSize * ratio, maxSize);
+				width = height / ratio;
+			} else {
+				width = Math.min(baseSize / ratio, maxSize);
+				height = width * ratio;
+			}
+			return [width, height];
+		};
 		for (const fileId in files) {
 			const file = files[fileId];
-			// width= height=が必要
-			elList.insertAdjacentHTML('beforeend', `<li><img loading="lazy" src="/file/${dirId}/${subdirName}/${file.name}" style="max-height: 300px; margin-right: 8px"></li>`);
+			const [w, h] = getPreviewImgSize(file);
+			elList.insertAdjacentHTML('beforeend', `<li><img loading="lazy" src="/file/${dirId}/${subdirName}/${file.name}" width="${w}" height="${h}"></li>`);
 		}
 	});
 });
@@ -40,6 +72,6 @@ window.addEventListener('DOMContentLoaded', function() {
 </head>
 <body>
 <ul id="directories"></ul>
-<ul id="list" style="display: flex; flex-wrap: wrap; list-style-type: none"></ul>
+<ul id="list"></ul>
 </body>
 </html>

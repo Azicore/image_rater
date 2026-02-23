@@ -1,6 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import UniqueId from './UniqueId.js';
+import MediaFile from './MediaFile.js';
 
 /**
  * 親ディレクトリごとのデータファイルを操作するためのクラス
@@ -51,7 +52,7 @@ export default class DirectoryInfo {
 	 * サブディレクトリの一覧を返す
 	 * @return {object} サブディレクトリIDをキー、サブディレクトリ名を値とするオブジェクト
 	 */
-	getSubdirList() {
+	async getSubdirList() {
 		const subdirNames = [];
 		const subdirs = {};
 		// 存在チェック
@@ -86,7 +87,7 @@ export default class DirectoryInfo {
 	 * @param {string} subdirId - サブディレクトリID
 	 * @return {object} ファイルIDをキー、ファイル情報オブジェクトを値とするオブジェクト
 	 */
-	getFileList(subdirId) {
+	async getFileList(subdirId) {
 		const fileNames = [];
 		const files = {};
 		const subdir = this.data[subdirId];
@@ -106,18 +107,27 @@ export default class DirectoryInfo {
 		}
 		// 新規チェック
 		const itemList = fs.readdirSync(path.join(this.dirPath, subdirName));
+		const imageSizePromise = [];
 		for (const item of itemList) {
-			const stats = fs.statSync(path.join(this.dirPath, subdirName, item));
+			const filePath = path.join(this.dirPath, subdirName, item);
+			const stats = fs.statSync(filePath);
 			if (!stats.isFile()) continue;
 			if (fileNames.includes(item)) continue;
 			if (!/\.(jpe?g|jpe|png|gif|svg|webp)$/i.test(item)) continue;
 			const newId = UniqueId.get();
+			imageSizePromise.push(new MediaFile(filePath, { fileId: newId }).getSize());
 			subdir.files[newId] = {
 				name: item,
 				size: stats.size,
 				modified: stats.mtime
 			};
 			files[newId] = subdir.files[newId];
+		}
+		const imageSize = await Promise.all(imageSizePromise);
+		for (const s of imageSize) {
+			const { fileId, width, height } = s;
+			files[fileId].width = width;
+			files[fileId].height = height;
 		}
 		this._save();
 		return files;
