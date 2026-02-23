@@ -1,5 +1,6 @@
 import path from 'path';
 import fs from 'fs';
+import UniqueId from './UniqueId.js';
 
 /**
  * 親ディレクトリごとのデータファイルを操作するためのクラス
@@ -52,14 +53,12 @@ export default class DirectoryInfo {
 	 */
 	getSubdirList() {
 		const subdirNames = [];
-		let maxSubdirId = 0;
 		const subdirs = {};
 		// 存在チェック
 		for (const subdirId in this.data) {
 			const subdirName = this.data[subdirId].name;
 			if (fs.existsSync(path.join(this.dirPath, subdirName))) {
 				subdirNames.push(subdirName);
-				maxSubdirId = Math.max(maxSubdirId, subdirId);
 				subdirs[subdirId] = subdirName;
 			} else {
 				// 存在しないものは除外
@@ -71,7 +70,7 @@ export default class DirectoryInfo {
 		for (const item of itemList) {
 			if (!fs.statSync(path.join(this.dirPath, item)).isDirectory()) continue;
 			if (subdirNames.includes(item)) continue;
-			const newId = ++maxSubdirId;
+			const newId = UniqueId.get();
 			this.data[newId] = {
 				name: item,
 				files: {}
@@ -89,7 +88,6 @@ export default class DirectoryInfo {
 	 */
 	getFileList(subdirId) {
 		const fileNames = [];
-		let maxFileId = 0;
 		const files = {};
 		const subdir = this.data[subdirId];
 		if (!this.data[subdirId]) return files;
@@ -100,7 +98,6 @@ export default class DirectoryInfo {
 			const fileName = file.name;
 			if (fs.existsSync(path.join(this.dirPath, subdirName, fileName))) {
 				fileNames.push(fileName);
-				maxFileId = Math.max(maxFileId, fileId);
 				files[fileId] = file;
 			} else {
 				// 存在しないものは除外
@@ -114,7 +111,7 @@ export default class DirectoryInfo {
 			if (!stats.isFile()) continue;
 			if (fileNames.includes(item)) continue;
 			if (!/\.(jpe?g|jpe|png|gif|svg|webp)$/i.test(item)) continue;
-			const newId = ++maxFileId;
+			const newId = UniqueId.get();
 			subdir.files[newId] = {
 				name: item,
 				size: stats.size,
