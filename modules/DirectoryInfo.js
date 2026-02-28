@@ -33,34 +33,51 @@ export default class DirectoryInfo extends DataFileLoader {
 
 	/**
 	 * サブディレクトリの一覧を返す
-	 * @return {object} サブディレクトリIDをキー、サブディレクトリ名を値とするオブジェクト
+	 * @return {object} サブディレクトリIDをキー、サブディレクトリ情報オブジェクトを値とするオブジェクト
 	 */
 	async getSubdirList() {
 		const subdirNames = [];
 		const subdirs = {};
+		const thumbUpdate = [];
 		// 存在チェック
 		for (const subdirId in this.data) {
-			const subdirName = this.data[subdirId].name;
-			if (fs.existsSync(path.join(this.dirPath, subdirName))) {
-				subdirNames.push(subdirName);
-				subdirs[subdirId] = subdirName;
+			const subdir = this.data[subdirId];
+			const stats = fs.statSync(path.join(this.dirPath, subdir.name), { throwIfNoEntry: false });
+			if (stats && stats.isDirectory()) {
+				subdirNames.push(subdir.name);
+				subdirs[subdirId] = {
+					name: subdir.name,
+					numFiles: subdir.files ? Object.keys(subdir.files).length : null
+				};
 			} else {
 				// 存在しないものは除外
+				if (subdir.files) {
+					for (const fileId in subdir.files) {
+						thumbUpdate.push(this.thumb.getUpdateInfoGenerator(fileId).delete());
+					}
+				}
 				delete this.data[subdirId];
 			}
 		}
 		// 新規チェック
-		const itemList = fs.readdirSync(this.dirPath);
+		let itemList = [];
+		try {
+			itemList = fs.readdirSync(this.dirPath);
+		} catch (e) { }
 		for (const item of itemList) {
-			if (!fs.statSync(path.join(this.dirPath, item)).isDirectory()) continue;
 			if (subdirNames.includes(item)) continue;
-			const newId = UniqueId.get();
-			this.data[newId] = {
+			if (!fs.statSync(path.join(this.dirPath, item)).isDirectory()) continue;
+			const subdirId = UniqueId.get();
+			this.data[subdirId] = {
 				name: item,
-				files: {}
+				files: null // ※nullは未確認の意味
 			};
-			subdirs[newId] = item;
+			subdirs[subdirId] = {
+				name: item,
+				numFiles: null
+			};
 		}
+		this.thumb.update(thumbUpdate);
 		this._save();
 		return subdirs;
 	}
@@ -74,36 +91,42 @@ export default class DirectoryInfo extends DataFileLoader {
 		const fileNames = [];
 		const files = {};
 		const subdir = this.data[subdirId];
-		const thumbUpdate = {};
-		if (!this.data[subdirId]) return files;
-		const subdirName = subdir.name;
+		if (!subdir) return files;
+		if (!subdir.files) subdir.files = {};
+		const thumbUpdate = [];
 		// 存在チェック
 		for (const fileId in subdir.files) {
 			const file = subdir.files[fileId];
 			const fileName = file.n;
-			const filePath = path.join(this.dirPath, subdirName, fileName);
+			const filePath = path.join(this.dirPath, subdir.name, fileName);
 			const stats = fs.statSync(filePath, { throwIfNoEntry: false });
 			// ファイルに変更がない場合のみ既存扱い
-			if (stats && stats.size == file.s && Math.floor(stats.mtimeMs / 1000) == file.m) {
+			if (stats && stats.isFile() && stats.size == file.s && Math.floor(stats.mtimeMs / 1000) == file.m) {
 				fileNames.push(fileName);
 				files[fileId] = file;
 			// 存在しないものと変更されたものは除外
 			} else {
 				delete subdir.files[fileId];
-				thumbUpdate[fileId] = null;
+				thumbUpdate.push(this.thumb.getUpdateInfoGenerator(fileId).delete());
 			}
 		}
 		// 新規チェック
-		const itemList = fs.readdirSync(path.join(this.dirPath, subdirName));
+		let itemList = [];
+		try {
+			itemList = fs.readdirSync(path.join(this.dirPath, subdir.name));
+		} catch (e) { }
 		const imageSizePromise = [];
 		for (const item of itemList) {
 			if (fileNames.includes(item)) continue;
 			if (!/\.(jpe?g|jpe|png|gif|svg|webp)$/i.test(item)) continue;
-			const filePath = path.join(this.dirPath, subdirName, item);
+			const filePath = path.join(this.dirPath, subdir.name, item);
 			const stats = fs.statSync(filePath);
 			if (!stats.isFile()) continue;
 			const fileId = UniqueId.get();
-			imageSizePromise.push(new MediaFile(filePath).getSize({ fileId, filePath }));
+			imageSizePromise.push((async () => {
+				const { width, height } = await (new MediaFile(filePath).getSize());
+				return { fileId, filePath, width, height };
+			})());
 			subdir.files[fileId] = {
 				n: item,
 				s: stats.size,
@@ -111,12 +134,17 @@ export default class DirectoryInfo extends DataFileLoader {
 			};
 			files[fileId] = subdir.files[fileId];
 		}
-		const imageSize = await Promise.all(imageSizePromise);
-		for (const s of imageSize) {
-			const { fileId, filePath, width: w, height: h } = s;
-			const { width: tw, height: th } = this.thumb.getThumbnailSize(w, h);
-			files[fileId] = Object.assign(files[fileId], { w, h, tw, th });
-			thumbUpdate[fileId] = { fileId, filePath, width: tw, height: th };
+		// 新規画像の画像サイズを取得
+		const imageSizes = await Promise.all(imageSizePromise);
+		for (const { fileId, filePath, width, height } of imageSizes) {
+			const info = this.thumb.getUpdateInfoGenerator(fileId).create({ filePath, width, height });
+			thumbUpdate.push(info);
+			Object.assign(subdir.files[fileId], {
+				w: width,
+				h: height,
+				tw: info.thumbWidth,
+				th: info.thumbHeight
+			});
 		}
 		this.thumb.update(thumbUpdate);
 		this._save();

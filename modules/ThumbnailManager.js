@@ -28,22 +28,26 @@ export default class ThumbnailManager extends DataFileLoader {
 		 * @type {number}
 		 */
 		this.MAX_SIZE = 360;
+		/**
+		 * データファイルの中でサムネイル作成済みを表す値
+		 * @type {number}
+		 */
+		this.THUMB_CREATED = 1;
 
 		this._load('config/thumbnails.json');
 	}
 
 	/**
-	 * サムネイルの取得
+	 * サムネイルを取得する
 	 * @param {string} fileId - ファイルID
 	 * @return {string} サムネイル画像のファイル名
 	 */
 	async get(fileId) {
 		if (this.data[fileId]) {
 			// サムネイルの作成または更新が必要な場合
-			if (this.data[fileId] !== true) {
-				await this._create(this.data[fileId]);
-				// 作成したら値をtrueにする
-				this.data[fileId] = true;
+			if (this.data[fileId] !== this.THUMB_CREATED) {
+				await this._create(fileId, this.data[fileId]);
+				this.data[fileId] = this.THUMB_CREATED;
 				this._save();
 			}
 			// サムネイルのファイル名を返す
@@ -55,17 +59,49 @@ export default class ThumbnailManager extends DataFileLoader {
 	}
 
 	/**
-	 * サムネイル情報の更新
+	 * サムネイル情報更新に必要なオブジェクトを作る
+	 * @param {string} fileId - ファイルID
+	 * @return {object} 以下の2つのメソッドを持つオブジェクト
+	 * @property {function} create 作成を指示するオブジェクトを返す
+	 * @property {function} delete 削除を指示するオブジェクトを返す
+	 */
+	getUpdateInfoGenerator(fileId) {
+		const obj = {
+			fileId: fileId,
+			isDelete: false,
+			isCreate: false
+		};
+		return {
+			// 作成を指示するオブジェクトを返す
+			create: ({ filePath, width, height }) => {
+				obj.isCreate = true;
+				return Object.assign(obj,
+					{ filePath, width, height },
+					// サムネイルサイズを計算
+					this._getThumbnailSize(width, height)
+				);
+			},
+			// 削除を指示するオブジェクトを返す
+			delete: () => {
+				obj.isDelete = true;
+				return obj;
+			}
+		};
+	}
+
+	/**
+	 * サムネイル情報を更新する
 	 * @param {object} thumbUpdate - 更新する情報
 	 */
 	update(thumbUpdate) {
-		for (const fileId in thumbUpdate) {
-			const file = thumbUpdate[fileId]; // object or true or null
-			if (file) {
-				// 値がtrueかファイル情報の場合は更新する
-				this.data[fileId] = file;
-			} else {
-				// 値がnullの場合は削除する
+		for (const info of thumbUpdate) {
+			const fileId = info.fileId;
+			// 作成指示の場合
+			if (info.isCreate) {
+				const { filePath, thumbWidth, thumbHeight } = info;
+				this.data[fileId] = { filePath, thumbWidth, thumbHeight };
+			// 削除指示の場合
+			} else if (info.isDelete) {
 				delete this.data[fileId];
 				this._delete(fileId);
 			}
@@ -74,14 +110,14 @@ export default class ThumbnailManager extends DataFileLoader {
 	}
 
 	/**
-	 * サムネイル画像のサイズを取得する
+	 * サムネイル画像のサイズを計算する
 	 * @param {number} width - 元画像の幅
 	 * @param {number} height - 元画像の高さ
 	 * @return {object} サムネイル画像のサイズ
-	 * @property {number} width サムネイル画像の幅
-	 * @property {number} height サムネイル画像の高さ
+	 * @property {number} thumbWidth サムネイル画像の幅
+	 * @property {number} thumbHeight サムネイル画像の高さ
 	 */
-	getThumbnailSize(width, height) {
+	_getThumbnailSize(width, height) {
 		const ratio = height / width;
 		if (height > width) {
 			height = Math.min(this.BASE_SIZE * ratio, this.MAX_SIZE);
@@ -91,23 +127,23 @@ export default class ThumbnailManager extends DataFileLoader {
 			height = width * ratio;
 		}
 		return {
-			width: Math.round(width),
-			height: Math.round(height)
+			thumbWidth: Math.round(width),
+			thumbHeight: Math.round(height)
 		};
 	}
 
 	/**
 	 * サムネイル画像を作成する
+	 * @param {string} fileId - ファイルID
 	 * @param {object} file - 画像の情報
-	 * @param {string} file.fileId - ファイルID
 	 * @param {string} file.filePath - ファイルパス
-	 * @param {number} file.width - サムネイルの幅
-	 * @param {number} file.height - サムネイルの高さ
+	 * @param {number} file.thumbWidth - サムネイルの幅
+	 * @param {number} file.thumbHeight - サムネイルの高さ
 	 */
-	async _create(file) {
-		const { fileId, filePath, width, height } = file;
+	async _create(fileId, file) {
+		const { filePath, thumbWidth, thumbHeight } = file;
 		const media = new MediaFile(filePath);
-		await media.createThumbnail(path.join(this.THUMB_DIR, `${fileId}.webp`), width, height);
+		await media.createThumbnail(path.join(this.THUMB_DIR, `${fileId}.webp`), thumbWidth, thumbHeight);
 	}
 
 	/**

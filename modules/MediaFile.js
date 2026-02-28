@@ -9,7 +9,7 @@ export default class MediaFile {
 	 * コンストラクタ
 	 * @param {string} filePath - ファイルパス
 	 */
-	constructor(filePath, info) {
+	constructor(filePath) {
 		/**
 		 * ファイルパス
 		 * @type {string}
@@ -29,17 +29,23 @@ export default class MediaFile {
 	 * 画像のサイズを返す
 	 * @return {object} width・heightを持つオブジェクト
 	 */
-	async getSize(additionalInfo = {}) {
+	async getSize() {
 		if (!this._metadata) {
 			this._metadata = await sharp(this.filePath).metadata();
 			console.log(`getSize: ${this.filePath}`);
 		}
-		return Object.assign({}, additionalInfo, this._metadata);
+		return this._metadata;
 	}
 
-	async createThumbnail(outputPath, width, height) {
+	/**
+	 * 画像のサムネイルを作成する
+	 * @param {string} outputPath - 作成先のパス
+	 * @param {number} thumbWidth - サムネイルの幅
+	 * @param {number} thumbHeight - サムネイルの高さ
+	 */
+	async createThumbnail(outputPath, thumbWidth, thumbHeight) {
 		console.log(`createThumbnail: ${this.filePath}`);
-		await sharp(this.filePath).resize(width, height).webp({ quality: 80 }).toFile(outputPath);
+		await sharp(this.filePath).resize(thumbWidth, thumbHeight).webp({ quality: 80 }).toFile(outputPath);
 	}
 
 }

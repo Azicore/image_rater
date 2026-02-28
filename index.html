@@ -32,7 +32,8 @@ window.addEventListener('DOMContentLoaded', function() {
 			const subdirs = await (await fetch(`/dir/${dirId}`)).json();
 			let subdirHtml = '';
 			for (const subdirId in subdirs) {
-				subdirHtml = `${subdirHtml}<li data-dir-id="${dirId}" data-subdir-id="${subdirId}">${subdirs[subdirId]}</li>`;
+				const subdir = subdirs[subdirId];
+				subdirHtml = `${subdirHtml}<li data-dir-id="${dirId}" data-subdir-id="${subdirId}">${subdir.name} (${subdir.numFiles ?? '-'})</li>`;
 			}
 			elDirs.insertAdjacentHTML('beforeend', `<li data-dir-id="${dirId}"><p>${dirs[dirId]}</p><ul>${subdirHtml}</ul></li>`);
 		}
@@ -55,6 +56,7 @@ window.addEventListener('DOMContentLoaded', function() {
 				</a>
 			</li>`);
 		}
+		e.target.innerText = e.target.innerText.replace(/\([-0-9]+\)$/, `(${Object.keys(files).length})`);
 	});
 });
 
