@@ -1,6 +1,13 @@
 {
   "directories": {
-
+    "1": {
+      "path": "D:\\foobar",
+      "title": "Foobar images"
+    },
+    "2": {
+      "path": "D:\\barbaz",
+      "title": "Barbaz images"
+    }
   },
   "settings": {
     "foobar": true

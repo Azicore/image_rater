@@ -29,7 +29,7 @@ app.get('/dirs', (req, res, next) => {
 // サブディレクトリ一覧・ファイル一覧を返す
 app.get(['/dir/:dirId', '/dir/:dirId/:subdirId'], async (req, res, next) => {
 	const { dirId, subdirId } = req.params;
-	const dirPath = config.data.directories[dirId];
+	const { path: dirPath } = config.data.directories[dirId];
 	if (dirPath == null) {
 		return res.json({ error: true });
 	}
@@ -60,7 +60,7 @@ app.get('/thumb/:fileId', async (req, res, next) => {
 // 画像ファイル本体を返す
 app.get('/file/:dirId/:subdirName/:fileName', (req, res, next) => {
 	const { dirId, subdirName, fileName } = req.params;
-	const dirPath = config.data.directories[dirId];
+	const { path: dirPath } = config.data.directories[dirId];
 	if (dirPath == null) {
 		return res.sendStatus(404);
 	}
@@ -80,12 +80,12 @@ app.get('/move', (req, res, next) => {
 
 // index.htmlを返す
 app.use('/', (req, res, next) => {
-	if (req.path == '/') {
+//	if (req.path == '/') {
 		next();
-	} else {
-		res.sendStatus(403);
-	}
-}, express.static(path.join(__dirname, './')));
+//	} else {
+//		res.sendStatus(403);
+//	}
+}, express.static(path.join(__dirname, './static/')));
 
 // サーバーを起動
 app.listen(SERVER_PORT);

@@ -1,0 +1,126 @@
+* {
+	margin: 0px;
+	padding: 0px;
+}
+body {
+	background: #111111;
+	color: #f0f0f0;
+	font-size: 14px;
+}
+#file_list {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	list-style-type: none;
+	--loading-color: #cccccc;
+	--loading-margin-top: 72px;
+	--loading-scale: 50%;
+}
+#file_list img {
+	margin-right: 8px;
+}
+
+#dirlist {
+	width: 360px;
+	height: 100vh;
+	max-width: unset;
+	max-height: unset;
+	border: 0px;
+	background: rgba(from #444444 r g b / 0.9);
+	color: #ffffff;
+	overflow-x: hidden;
+}
+#dirlist_msg {
+	margin: 16px 8px;
+	font-size: 12px;
+}
+#dirlist_curr {
+	margin: 0px 8px 8px;
+	padding: 4px 8px;
+	border-radius: 8px;
+	background: #007788;
+	font-size: 12px;
+	line-height: 16px;
+	line-break: anywhere;
+	font-weight: bold;
+	text-align: center;
+	cursor: pointer;
+}
+#dirlist_curr:hover {
+	background: oklch(from #007788 calc(l + 0.05) c h);
+}
+#dirlist_dir_block, #dirlist_subdir_block {
+	display: none;
+	--loading-color: #cccccc;
+	--loading-margin-top: 0px;
+	--loading-scale: 50%;
+}
+#dirlist_dir_block.dirlist_block_displayed, #dirlist_subdir_block.dirlist_block_displayed {
+	display: block;
+}
+#dirlist ul {
+	border-top: 1px solid #555555;
+}
+#dirlist li {
+	padding: 8px;
+	border-bottom: 1px solid #555555;
+	line-height: 18px;
+	line-break: anywhere;
+	cursor: pointer;
+}
+.dirlist_dir_title {
+
+}
+.dirlist_dir_path {
+	font-size: 12px;
+	color: #00bb88;
+}
+.dirlist_subdir_num {
+	margin-left: 8px;
+	font-size: 12px;
+}
+#dirlist li:hover {
+	background: oklch(from #444444 calc(l + 0.2) c h / 0.5);
+}
+#dirlist li.dirlist_subdir_selected {
+	background: #00bb88;
+}
+
+
+.loading {
+	position: relative;
+}
+.loading * {
+	display: none;
+}
+.loading::before {
+	content: '';
+	width: 100px;
+	height: 100px;
+	border-radius: 50%;
+	background: conic-gradient(transparent 0deg, transparent var(--loading-angle), var(--loading-color) var(--loading-angle), var(--loading-color) calc(360deg - var(--loading-angle)), transparent calc(360deg - var(--loading-angle)), transparent 360deg);
+	clip-path: path(evenodd, 'M 0 0 L 100 0 L 100 100 L 0 100 L 0 0 L 50 10 A 40 40 0 1 0 50.001 10 Z');
+	animation: 1s linear infinite loading;
+	position: absolute;
+	left: calc(50% - 50px);
+	top: var(--loading-margin-top);
+}
+@property --loading-angle {
+	syntax: '<angle>';
+	initial-value: 0deg;
+	inherits: false;
+}
+@keyframes loading {
+	0% {
+		--loading-angle: 15deg;
+		transform: scale(var(--loading-scale)) rotate(0deg);
+	}
+	50% {
+		--loading-angle: 165deg;
+		transform: scale(var(--loading-scale)) rotate(180deg);
+	}
+	100% {
+		--loading-angle: 15deg;
+		transform: scale(var(--loading-scale)) rotate(360deg);
+	}
+}
