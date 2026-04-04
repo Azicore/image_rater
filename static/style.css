@@ -7,7 +7,59 @@ body {
 	color: #f0f0f0;
 	font-size: 14px;
 }
+:root {
+	--status-height: 32px;
+}
+#status {
+	width: 100%;
+	height: var(--status-height);
+	background: rgba(from #333333 r g b / 0.8);
+	position: fixed;
+	display: flex;
+	align-items: center;
+	font-size: 13px;
+	transition: transform 0.2s;
+}
+#status.status_hidden {
+	transform: translateY(calc(-1 * var(--status-height)));
+}
+#status_current_dir {
+	padding: 0px 8px;
+	border-right: 1px solid #666666;
+	line-height: var(--status-height);
+	cursor: pointer;
+}
+#status_current_dir:hover, #status_file_name:hover {
+	background: rgba(from #444444 r g b / 0.8);
+}
+#status_current_dir::before {
+	content: '';
+	width: 16px;
+	height: 12px;
+	margin-right: 8px;
+	background: linear-gradient(0deg, #ffffff 0%, #ffffff 20%,
+		transparent 20%, transparent 40%, #ffffff 40%, #ffffff 60%,
+		transparent 60%, transparent 80%, #ffffff 80%, #ffffff 100%);
+	vertical-align: middle;
+	display: inline-block;
+}
+.status_subdir_num {
+	margin-left: 4px;
+	font-size: 12px;
+}
+#status_file_name {
+	padding: 0px 8px;
+	border-right: 1px solid #666666;
+	line-height: var(--status-height);
+	cursor: pointer;
+}
+#status_file_props {
+	padding: 0px 8px;
+	line-height: var(--status-height);
+}
+
 #filelist {
+	padding-top: var(--status-height);
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
@@ -38,8 +90,8 @@ body {
 	overflow-x: hidden;
 }
 #dirlist_msg {
-	margin: 16px 8px;
-	font-size: 12px;
+	margin: 12px 8px;
+	font-size: 13px;
 }
 #dirlist_curr {
 	margin: 0px 8px 8px;

@@ -1,3 +1,4 @@
+import EventDispatchable from './EventDispatchable.js';
 import HtmlGenerator from './HtmlGenerator.js';
 import SelectedFiles from './SelectedFiles.js';
 import API from './API.js';
@@ -5,31 +6,65 @@ import API from './API.js';
 /**
  * ファイル一覧を表すクラス
  */
-export default class FileSelector {
+export default class FileSelector extends EventDispatchable {
 
 	/**
 	 * コンストラクタ
 	 */
 	constructor() {
+		super();
+		/**
+		 * メイン要素
+		 * @type {HTMLElement}
+		 */
 		this.container = document.getElementById('filelist');
-//		this.elStatus = document.getElementById('status');
-		
+		/**
+		 * 表示中のファイル情報一覧
+		 * @type {object[]}
+		 */
 		this.files = [];
+		/**
+		 * 表示中のファイルに対応する要素一覧
+		 * @type {HTMLElement[]}
+		 */
 		this.elems = [];
+		/**
+		 * 選択中のファイルを表すSelectedFilesオブジェクト
+		 * @type {SelectedFiles}
+		 */
 		this.selectedFiles = new SelectedFiles();
-		this.selectedFiles.onchange = (selected) => {
-			console.log(`selected: ${selected.length}`);
-			this.updateStatus(selected);
-		};
+		/**
+		 * ソートキー
+		 * @type {string}
+		 */
 		this.sortKey = 'n';
+		/**
+		 * 逆順ソートかどうか
+		 * @type {boolean}
+		 */
 		this.sortDesc = false;
+		/**
+		 * 最後にクリックされた時刻
+		 * @type {number}
+		 */
 		this.lastClickedTime = 0;
+
+		this._defineEvents('select');
 		this._setEventHandlers();
+		// 選択中ファイルが変更されたらselectイベントを発火する（ステータスバー変更用）
+		this.selectedFiles.on('change', (selectedElems) => {
+			this.trigger('select', selectedElems.length == 1 ? this.files[selectedElems[0].dataset.itemN] : selectedElems.length);
+		});
+		// スクロールのために上下のpadding値をselectedFilesに設定しておく
+		this.selectedFiles.containerPadding = (({ paddingTop, paddingBottom }) => ({
+			top: parseInt(paddingTop, 10) || 0,
+			bottom: parseInt(paddingBottom, 10) || 0
+		}))(getComputedStyle(this.container));
 		
 	}
 
 	/**
-	 * イベントハンドラを設定する
+	 * DOMイベントを設定する
 	 */
 	_setEventHandlers() {
 		// ファイルがクリックされたとき
@@ -71,9 +106,12 @@ export default class FileSelector {
 	
 	}
 
-	// ステータスを更新する
-	updateStatus(selected) {
-		//this.elStatus.innerHTML = selected.length == 1 ? selected[0].id : selected.length == 0 ? 'ファイルが選択されていません。' : `${selected.length}個が選択されています。`;
+	/**
+	 * 表示中のファイル数を返す
+	 * @return {number} ファイルの数
+	 */
+	get length() {
+		return this.files.length;
 	}
 
 	/**

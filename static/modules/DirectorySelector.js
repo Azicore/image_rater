@@ -1,3 +1,4 @@
+import EventDispatchable from './EventDispatchable.js';
 import ExclusiveClassName from './ExclusiveClassName.js';
 import HtmlGenerator from './HtmlGenerator.js';
 import API from './API.js';
@@ -5,45 +6,68 @@ import API from './API.js';
 /**
  * ディレクトリ選択メニューを表すクラス
  */
-export default class DirectorySelector {
+export default class DirectorySelector extends EventDispatchable {
 
 	/**
 	 * コンストラクタ
 	 */
 	constructor() {
+		super();
+		/**
+		 * メイン要素
+		 * @type {HTMLElement}
+		 */
 		this.container = document.getElementById('dirlist');
+		/**
+		 * 親ディレクトリ一覧を表示するブロック要素
+		 * @type {HTMLElement}
+		 */
 		this.elDirBlock = document.getElementById('dirlist_dir_block');
+		/**
+		 * 親ディレクトリ一覧を表示するリスト要素
+		 * @type {HTMLElement}
+		 */
 		this.elDirList = document.getElementById('dirlist_dir_list');
+		/**
+		 * サブディレクトリ一覧を表示するブロック要素
+		 * @type {HTMLElement}
+		 */
 		this.elSubdirBlock = document.getElementById('dirlist_subdir_block');
+		/**
+		 * サブディレクトリ一覧を表示するリスト要素
+		 * @type {HTMLElement}
+		 */
 		this.elSubdirList = document.getElementById('dirlist_subdir_list');
-		this.elDirBtn = document.getElementById('directory_button');
+		/**
+		 * 選択中の親ディレクトリを表示する要素
+		 * @type {HTMLElement}
+		 */
 		this.elCurrDir = document.getElementById('dirlist_curr');
+		/**
+		 * 選択中の親ディレクトリとサブディレクトリ
+		 * @type {object}
+		 */
 		this.current = {};
+		/**
+		 * 親ディレクトリ一覧の情報
+		 * @type {object}
+		 */
 		this.dirs = {};
+		/**
+		 * 表示中のパネルを表すクラス名
+		 * @type {ExclusiveClassName}
+		 */
 		this.displayedPanelClass = new ExclusiveClassName('dirlist_block_displayed');
+		
+		this._defineEvents('select', 'close');
 		this._setEventHandlers();
 		this._createDirectoryList();
-		this.onchange = () => {};
 	}
 
 	/**
-	 * イベントハンドラを設定する
+	 * DOMイベントを設定する
 	 */
 	_setEventHandlers() {
-		// 表示されたとき
-		this.elDirBtn.addEventListener('click', (e) => {
-			if (this.current.dirId) {
-				if (this.updateRequired) {
-					this._createSubdirectoryList(this.current.dirId);
-				}
-				this._switchTo('subdir');
-			} else {
-				// サブディレクトリ未選択時（初期状態）は、親ディレクトリ一覧を表示
-				this._switchTo('dir');
-			}
-			this.updateRequired = false;
-			this.container.togglePopover();
-		});
 		// 親ディレクトリが選択されたとき
 		this.elDirList.addEventListener('click', (e) => {
 			const li = e.target.closest('li[data-dir-id]');
@@ -59,7 +83,9 @@ export default class DirectorySelector {
 			const subdirId = li.dataset.subdirId;
 			if (subdirId != this.current.subdirId) {
 				const dirId = this.elSubdirList.dataset.dirId;
-				typeof this.onchange == 'function' && this.onchange(dirId, subdirId);
+				const subdirName = li.querySelector('.dirlist_subdir_name').innerText;
+				const subdirNum = li.querySelector('.dirlist_subdir_num').innerText;
+				this.trigger('select', dirId, subdirId, subdirName, subdirNum);
 				this.current = { dirId, subdirId };
 				this.updateRequired = true;
 			}
@@ -69,6 +95,28 @@ export default class DirectorySelector {
 		this.elCurrDir.addEventListener('click', (e) => {
 			this._switchTo('dir');
 		});
+		// 閉じるとき
+		this.container.addEventListener('toggle', (e) => {
+			if (e.newState != 'closed') return;
+			this.trigger('close');
+		})
+	}
+
+	/**
+	 * ディレクトリ選択メニューを表示する
+	 */
+	show() {
+		if (this.current.dirId) {
+			if (this.updateRequired) {
+				this._createSubdirectoryList(this.current.dirId);
+			}
+			this._switchTo('subdir');
+		} else {
+			// サブディレクトリ未選択時（初期状態）は、親ディレクトリ一覧を表示
+			this._switchTo('dir');
+		}
+		this.updateRequired = false;
+		this.container.showPopover();
 	}
 
 	/**

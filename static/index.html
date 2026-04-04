@@ -4,25 +4,38 @@
 <meta charset="utf-8">
 <title>Image Rater</title>
 <script type="module">
+import StatusBar from './modules/StatusBar.js';
 import DirectorySelector from './modules/DirectorySelector.js';
 import FileSelector from './modules/FileSelector.js';
 
-window.addEventListener('DOMContentLoaded', function() {
-
-	const fileList = new FileSelector();
-	const directoryList = new DirectorySelector();
-	directoryList.onchange = (dirId, subdirId) => {
-		fileList.update(dirId, subdirId);
-	};
-
+const status = new StatusBar();
+const fileList = new FileSelector();
+const directoryList = new DirectorySelector();
+fileList.on('select', (file) => {
+	status.updateFileStatus(file);
 });
+status.on('directorymenuopen', () => {
+	directoryList.show();
+	status.hide();
+});
+directoryList.on('select', async (dirId, subdirId, subdirName, subdirNum) => {
+	status.updateCurrentDirectory(subdirName, subdirNum);
+	await fileList.update(dirId, subdirId);
+	status.updateCurrentDirectory(subdirName, `(${fileList.length})`);
+});
+directoryList.on('close', () => {
+	status.show();
+});
+
 
 </script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="status">
-	<div id="directory_button">Directory</div>
+	<div id="status_current_dir">ディレクトリを選択</div>
+	<div id="status_file_name"></div>
+	<div id="status_file_props"></div>
 </div>
 <div id="dirlist" popover>
 	<p id="dirlist_msg">ディレクトリを選択：</p>

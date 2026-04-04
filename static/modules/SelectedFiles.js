@@ -1,14 +1,16 @@
+import EventDispatchable from './EventDispatchable.js';
 import ExclusiveClassName from './ExclusiveClassName.js';
 
 /**
  * 選択済みのファイルを表すクラス
  */
-export default class SelectedFiles {
+export default class SelectedFiles extends EventDispatchable {
 
 	/**
 	 * 初期化
 	 */
 	constructor() {
+		super();
 		/**
 		 * ExclusiveClassNameオブジェクト
 		 * @type {ExclusiveClassName}
@@ -29,11 +31,8 @@ export default class SelectedFiles {
 		 * @type {number}
 		 */
 		this.length = 0;
-		/**
-		 * 選択済みファイルが変更されたときに呼び出されるイベントハンドラ
-		 * @type {function}
-		 */
-		this.onchange = () => {};
+
+		this._defineEvents('change');
 	}
 
 	/**
@@ -203,12 +202,13 @@ export default class SelectedFiles {
 		// スクロール位置の調整
 		if (elem) {
 			const body = document.documentElement;
+			const containerPadding = this.containerPadding || { top: 0, bottom: 0 };
 			const { top: elemTop, bottom: elemBottom } = elem.getBoundingClientRect();
-			if (elemBottom > body.clientHeight) {
-				window.scrollBy(0, elemBottom - body.clientHeight);
+			if (elemBottom > body.clientHeight - containerPadding.bottom) {
+				window.scrollBy(0, elemBottom - body.clientHeight + containerPadding.bottom);
 			}
-			if (0 > elemTop) {
-				window.scrollBy(0, elemTop);
+			if (containerPadding.top > elemTop) {
+				window.scrollBy(0, elemTop - containerPadding.top);
 			}
 		}
 		// 配列風オブジェクトの作成
@@ -220,7 +220,7 @@ export default class SelectedFiles {
 			this[i] = this.selectedClass.elems[i];
 		}
 		// イベントの発動
-		if (typeof this.onchange == 'function') this.onchange(this);
+		this.trigger('change', this);
 	}
 
 }
