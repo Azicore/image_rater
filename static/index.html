@@ -5,10 +5,15 @@
 <title>Image Rater</title>
 <script type="module">
 import DirectorySelector from './modules/DirectorySelector.js';
+import FileSelector from './modules/FileSelector.js';
 
 window.addEventListener('DOMContentLoaded', function() {
 
-	new DirectorySelector();
+	const fileList = new FileSelector();
+	const directoryList = new DirectorySelector();
+	directoryList.onchange = (dirId, subdirId) => {
+		fileList.update(dirId, subdirId);
+	};
 
 });
 
@@ -29,6 +34,6 @@ window.addEventListener('DOMContentLoaded', function() {
 		<ul id="dirlist_subdir_list"></ul>
 	</div>
 </div>
-<ul id="file_list"></ul>
+<ul id="filelist"></ul>
 </body>
 </html>

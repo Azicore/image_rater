@@ -21,11 +21,17 @@ export default class HtmlGenerator {
 				return obj;
 			},
 			attr: (name, value) => {
-				elem.setAttribute(name, value);
+				const attrs = typeof name == 'object' ? name : { [name]: value };
+				for (const key in attrs) {
+					elem.setAttribute(key, attrs[key]);
+				}
 				return obj;
 			},
 			data: (name, value) => {
-				elem.dataset[name] = value;
+				const datas = typeof name == 'object' ? name : { [name]: value };
+				for (const key in datas) {
+					elem.dataset[key] = datas[key];
+				}
 				return obj;
 			},
 			end: (...contents) => {

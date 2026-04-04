@@ -1,5 +1,6 @@
 import ExclusiveClassName from './ExclusiveClassName.js';
 import HtmlGenerator from './HtmlGenerator.js';
+import API from './API.js';
 
 /**
  * ディレクトリ選択メニューを表すクラス
@@ -22,6 +23,7 @@ export default class DirectorySelector {
 		this.displayedPanelClass = new ExclusiveClassName('dirlist_block_displayed');
 		this._setEventHandlers();
 		this._createDirectoryList();
+		this.onchange = () => {};
 	}
 
 	/**
@@ -57,7 +59,7 @@ export default class DirectorySelector {
 			const subdirId = li.dataset.subdirId;
 			if (subdirId != this.current.subdirId) {
 				const dirId = this.elSubdirList.dataset.dirId;
-				this.createFileList(dirId, subdirId);
+				typeof this.onchange == 'function' && this.onchange(dirId, subdirId);
 				this.current = { dirId, subdirId };
 				this.updateRequired = true;
 			}
@@ -84,7 +86,7 @@ export default class DirectorySelector {
 	async _createDirectoryList() {
 		const HTML = HtmlGenerator;
 		this.elDirList.innerHTML = '';
-		this.dirs = await (await fetch('/dirs')).json();
+		this.dirs = await API.getDirectoryList();
 		for (const dirId in this.dirs) {
 			const { path: dirPath, title: dirTitle } = this.dirs[dirId];
 			this.elDirList.appendChild(
@@ -106,7 +108,7 @@ export default class DirectorySelector {
 		this.elSubdirList.innerHTML = '';
 		this.elCurrDir.innerText = this.dirs[dirId].title;
 		this._switchTo('subdir');
-		const subdirs = await (await fetch(`/dir/${dirId}`)).json();
+		const subdirs = await API.getSubdirectoryList(dirId);
 		this.elSubdirList.innerHTML = '';
 		this.elSubdirList.dataset.dirId = dirId;
 		for (const subdirId in subdirs) {
@@ -119,28 +121,6 @@ export default class DirectorySelector {
 			);
 		}
 		this.elSubdirBlock.classList.remove('loading');
-	}
-
-	/**
-	 * ファイル一覧を生成する
-	 * @param {string} dirId - ディレクトリID
-	 * @param {string} subdirId - サブディレクトリID
-	 */
-	async createFileList(dirId, subdirId) {
-		const elFileList = document.getElementById('file_list');
-		const HTML = HtmlGenerator;
-		elFileList.innerHTML = '';
-		elFileList.classList.add('loading');
-		const files = await (await fetch(`/dir/${dirId}/${subdirId}`)).json();
-		for (const fileId in files) {
-			const file = files[fileId];
-			elFileList.appendChild(
-				HTML.li.end(
-					HTML.img.attr('loading', 'lazy').attr('src', `/thumb/${fileId}`).attr('width', file.tw).attr('height', file.th).attr('alt', file.n).attr('title', file.n).end()
-				)
-			);
-		}
-		elFileList.classList.remove('loading');
 	}
 
 }

@@ -7,7 +7,7 @@ body {
 	color: #f0f0f0;
 	font-size: 14px;
 }
-#file_list {
+#filelist {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
@@ -16,8 +16,15 @@ body {
 	--loading-margin-top: 72px;
 	--loading-scale: 50%;
 }
-#file_list img {
-	margin-right: 8px;
+#filelist li {
+	margin: 4px;
+	border: 2px solid transparent;
+}
+#filelist li.filelist_selected {
+	border: 2px solid #00ffff;
+}
+#filelist img {
+	vertical-align: middle;
 }
 
 #dirlist {
