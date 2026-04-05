@@ -7,12 +7,21 @@
 import StatusBar from './modules/StatusBar.js';
 import DirectorySelector from './modules/DirectorySelector.js';
 import FileSelector from './modules/FileSelector.js';
+import MediaViewer from './modules/MediaViewer.js';
 
 const status = new StatusBar();
-const fileList = new FileSelector();
 const directoryList = new DirectorySelector();
+const fileList = new FileSelector();
+const viewer = new MediaViewer();
 fileList.on('select', (file) => {
 	status.updateFileStatus(file);
+});
+fileList.on('fileopen', (dirId, subdirName, fileName) => {
+	viewer.open(dirId, subdirName, fileName);
+	fileList.disabled = true;
+});
+viewer.on('close', () => {
+	fileList.disabled = false;
 });
 status.on('directorymenuopen', () => {
 	directoryList.show();
@@ -20,8 +29,8 @@ status.on('directorymenuopen', () => {
 });
 directoryList.on('select', async (dirId, subdirId, subdirName, subdirNum) => {
 	status.updateCurrentDirectory(subdirName, subdirNum);
-	await fileList.update(dirId, subdirId);
-	status.updateCurrentDirectory(subdirName, `(${fileList.length})`);
+	await fileList.update(dirId, subdirId, subdirName);
+	status.updateCurrentDirectory(subdirName, fileList.length);
 });
 directoryList.on('close', () => {
 	status.show();
@@ -48,5 +57,6 @@ directoryList.on('close', () => {
 	</div>
 </div>
 <ul id="filelist"></ul>
+<div id="viewer"></div>
 </body>
 </html>

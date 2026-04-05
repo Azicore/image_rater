@@ -52,7 +52,7 @@ export default class StatusBar extends EventDispatchable {
 		const HTML = HtmlGenerator;
 		this.elCurrentDir.innerHTML = '';
 		this.elCurrentDir.appendChild(HTML.span.cls('status_subdir_name').end(name));
-		this.elCurrentDir.appendChild(HTML.span.cls('status_subdir_num').end(num));
+		if (num !== '') this.elCurrentDir.appendChild(HTML.span.cls('status_subdir_num').end(`(${num})`));
 	}
 
 	/**

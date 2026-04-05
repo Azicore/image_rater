@@ -32,4 +32,24 @@ export default class API {
 		return Object.keys(files).map(id => Object.assign({ id }, files[id]));
 	}
 
+	/**
+	 * サムネイルを取得するURLを返す
+	 * @param {string} fileId - ファイルID
+	 * @return {string} サムネイルを取得するURL
+	 */
+	static getThumbnailURL(fileId) {
+		return `/thumb/${fileId}`;
+	}
+
+	/**
+	 * ファイル本体を取得するURLを返す
+	 * @param {string} dirId - ディレクトリID
+	 * @param {string} subdirName - サブディレクトリの名前
+	 * @param {string} fileName - ファイル名
+	 * @return {string} ファイル本体を取得するURL
+	 */
+	static getFileURL(dirId, subdirName, fileName) {
+		return `/file/${dirId}/${subdirName}/${fileName}`;
+	}
+
 }

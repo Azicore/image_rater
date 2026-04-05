@@ -29,6 +29,16 @@ export default class FileSelector extends EventDispatchable {
 		 */
 		this.elems = [];
 		/**
+		 * 表示中のサブディレクトリの親ディレクトリID
+		 * @type {string}
+		 */
+		this.dirId = null;
+		/**
+		 * 表示中のサブディレクトリの名前
+		 * @type {string}
+		 */
+		this.subdirName = null;
+		/**
 		 * 選択中のファイルを表すSelectedFilesオブジェクト
 		 * @type {SelectedFiles}
 		 */
@@ -48,8 +58,13 @@ export default class FileSelector extends EventDispatchable {
 		 * @type {number}
 		 */
 		this.lastClickedTime = 0;
+		/**
+		 * 機能を無効にするかどうか（ビューア表示中にtureにする）
+		 * @type {boolean}
+		 */
+		this.disabled = false;
 
-		this._defineEvents('select');
+		this._defineEvents('select', 'fileopen', 'next');
 		this._setEventHandlers();
 		// 選択中ファイルが変更されたらselectイベントを発火する（ステータスバー変更用）
 		this.selectedFiles.on('change', (selectedElems) => {
@@ -74,9 +89,9 @@ export default class FileSelector extends EventDispatchable {
 			const clickedTime = Date.now();
 			// ダブルクリック
 			if (this.selectedFiles.length == 1 && 250 > clickedTime - this.lastClickedTime) {
-				// ●TODO
-				console.log('Double clicked!');
 				this.lastClickedTime = 0;
+				// ファイルを開く
+				this.openFile(li);
 				return;
 			}
 			this.lastClickedTime = clickedTime;
@@ -93,14 +108,31 @@ export default class FileSelector extends EventDispatchable {
 		});
 		// キーボード操作
 		window.addEventListener('keydown', (e) => {
+			// 前のファイル（←）
 			if (e.code == 'ArrowLeft') {
 				this.selectedFiles.prev(this.elems);
+				// ビューア表示中はファイルを開く
+				if (this.disabled) this.openFile(this.selectedFiles[0]);
+			// 次のファイル（→）
 			} else if (e.code == 'ArrowRight') {
 				this.selectedFiles.next(this.elems);
+				// ビューア表示中はファイルを開く
+				if (this.disabled) this.openFile(this.selectedFiles[0]);
+			// 真上のファイル（↑）
 			} else if (e.code == 'ArrowUp') {
+				// ビューア表示中は無効
+				if (this.disabled) return;
 				this.selectedFiles.prevRow(this.elems) && e.preventDefault();
+			// 真下のファイル（↓）
 			} else if (e.code == 'ArrowDown') {
+				// ビューア表示中は無効
+				if (this.disabled) return;
 				this.selectedFiles.nextRow(this.elems) && e.preventDefault();
+			// ファイルを開く
+			} else if (e.code == 'Enter') {
+				// ビューア表示中は無効
+				if (this.disabled) return;
+				if (this.selectedFiles.length == 1) this.openFile(this.selectedFiles[0]);
 			}
 		});
 	
@@ -115,13 +147,25 @@ export default class FileSelector extends EventDispatchable {
 	}
 
 	/**
+	 * ファイルを開く
+	 * @param {HTMLElement} elem - 開くファイルの要素
+	 */
+	openFile(elem) {
+		// fileopenイベントを発動する
+		this.trigger('fileopen', this.dirId, this.subdirName, elem.dataset.fileName);
+	}
+
+	/**
 	 * ファイル一覧を更新する
 	 * @param {string} [dirId] - ディレクトリID
 	 * @param {string} [subdirId] - サブディレクトリID
+	 * @param {string} [subdirName] - サブディレクトリ名
 	 */
-	async update(dirId, subdirId) {
+	async update(dirId, subdirId, subdirName) {
 		// ディレクトリが指定された場合は再取得
-		if (dirId && subdirId) {
+		if (dirId && subdirId && subdirName) {
+			this.dirId = dirId;
+			this.subdirName = subdirName;
 			this.selectedFiles.clear(); // 選択を全解除
 			this.container.innerHTML = '';
 			this.container.classList.add('loading');
@@ -156,11 +200,11 @@ export default class FileSelector extends EventDispatchable {
 	 */
 	_createItemElement(file) {
 		const HTML = HtmlGenerator;
-		return HTML.li.end(
+		return HTML.li.data('fileName', file.n).end(
 			HTML.img.attr({
 				loading: 'lazy', width: file.tw, height: file.th,
 				alt: file.n, title: file.n
-			}).attr('src', `/thumb/${file.id}`).end() // ※Lazy loadingを確実にするため、srcは最後に分けて追加
+			}).attr('src', API.getThumbnailURL(file.id)).end() // ※Lazy loadingを確実にするため、srcは最後に分けて追加
 		);
 	}
 
