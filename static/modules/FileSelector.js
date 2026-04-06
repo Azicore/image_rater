@@ -10,8 +10,9 @@ export default class FileSelector extends EventDispatchable {
 
 	/**
 	 * コンストラクタ
+	 * @param {LocalConfig} config - LocalConfigオブジェクト
 	 */
-	constructor() {
+	constructor(config) {
 		super();
 		/**
 		 * メイン要素
@@ -44,15 +45,16 @@ export default class FileSelector extends EventDispatchable {
 		 */
 		this.selectedFiles = new SelectedFiles();
 		/**
-		 * ソートキー
-		 * @type {string}
+		 * 各ソートキーで降順がデフォルトかどうか
+		 * @type {object}
 		 */
-		this.sortKey = 'n';
-		/**
-		 * 逆順ソートかどうか
-		 * @type {boolean}
-		 */
-		this.sortDesc = false;
+		this.sortDefs = {
+			r: true, // レーティング：降順がデフォルト
+			m: true, // 最終更新日時：降順がデフォルト
+			s: true, // ファイルサイズ：降順がデフォルト
+			d: true, // 画素数：降順がデフォルト
+			n: false // ファイル名：昇順がデフォルト
+		};
 		/**
 		 * 最後にクリックされた時刻
 		 * @type {number}
@@ -66,6 +68,7 @@ export default class FileSelector extends EventDispatchable {
 
 		this._defineEvents('select', 'fileopen', 'next');
 		this._setEventHandlers();
+		this.setSortFunc(config.sortKey in this.sortDefs ? config.sortKey : 'r', config.sortReversed);
 		// 選択中ファイルが変更されたらselectイベントを発火する（ステータスバー変更用）
 		this.selectedFiles.on('change', (selectedElems) => {
 			this.trigger('select', selectedElems.length == 1 ? this.files[selectedElems[0].dataset.itemN] : selectedElems.length);
@@ -146,6 +149,16 @@ export default class FileSelector extends EventDispatchable {
 		return this.files.length;
 	}
 
+	setSortFunc(sortKey, sortReversed) {
+		if (this.sortDefs[sortKey] == null) return;
+		const rev = sortReversed ? -1 : 1;
+		const desc = this.sortDefs[sortKey] ? -1 : 1;
+		const sign = rev * desc;
+		this.sortFunc = (a, b) => {
+			return a[sortKey] > b[sortKey] ? sign : b[sortKey] > a[sortKey] ? -sign : a.n > b.n ? rev : -rev;
+		};
+	}
+
 	/**
 	 * ファイルを開く
 	 * @param {HTMLElement} elem - 開くファイルの要素
@@ -170,14 +183,14 @@ export default class FileSelector extends EventDispatchable {
 			this.container.innerHTML = '';
 			this.container.classList.add('loading');
 			this.files = await API.getFileList(dirId, subdirId);
+			this.files.forEach(file => { file.d = file.w * file.h }); // 画素数を計算しておく
 			this.container.classList.remove('loading');
 		}
 		if (this.files.length == 0) {
 			// ●ファイルがありません
 		} else {
 			// ソート
-			const desc = this.sortDesc ? -1 : 1;
-			this.files.sort((a, b) => (a[this.sortKey] > b[this.sortKey] ? 1 : -1) * desc);
+			this.files.sort(this.sortFunc);
 			for (let i = 0; this.files.length > i; i++) {
 				const file = this.files[i];
 				if (!file.elem) file.elem = this._createItemElement(file); // 初回は要素を作成

@@ -4,38 +4,58 @@
 <meta charset="utf-8">
 <title>Image Rater</title>
 <script type="module">
+import LocalConfig from './modules/LocalConfig.js';
 import StatusBar from './modules/StatusBar.js';
 import DirectorySelector from './modules/DirectorySelector.js';
 import FileSelector from './modules/FileSelector.js';
 import MediaViewer from './modules/MediaViewer.js';
+import SortMenu from './modules/SortMenu.js';
 
+const config = new LocalConfig();
 const status = new StatusBar();
 const directoryList = new DirectorySelector();
-const fileList = new FileSelector();
+const fileList = new FileSelector(config);
 const viewer = new MediaViewer();
+const sortMenu = new SortMenu(config);
+
+// ファイルが選択されたとき
 fileList.on('select', (file) => {
+	// ステータスバーを更新する
 	status.updateFileStatus(file);
 });
+// ファイルが開かれたとき
 fileList.on('fileopen', (dirId, subdirName, fileName) => {
+	// ビューアを起動する
 	viewer.open(dirId, subdirName, fileName);
 	fileList.disabled = true;
 });
+// ビューアが閉じられたとき
 viewer.on('close', () => {
 	fileList.disabled = false;
 });
+// ステータスバーからディレクトリ選択メニューが開かれたとき
 status.on('directorymenuopen', () => {
+	// ディレクトリ選択メニューを表示する
 	directoryList.show();
 	status.hide();
 });
+// ディレクトリが選択されたとき
 directoryList.on('select', async (dirId, subdirId, subdirName, subdirNum) => {
+	// ステータスバーを更新してファイル一覧を作成
 	status.updateCurrentDirectory(subdirName, subdirNum);
 	await fileList.update(dirId, subdirId, subdirName);
 	status.updateCurrentDirectory(subdirName, fileList.length);
 });
+// ディレクトリ選択メニューが閉じられたとき
 directoryList.on('close', () => {
 	status.show();
 });
-
+// ソートが選択されたとき
+sortMenu.on('sort', (sortKey, sortReversed) => {
+	// ファイル一覧を更新
+	fileList.setSortFunc(sortKey, sortReversed);
+	fileList.update();
+});
 
 </script>
 <link rel="stylesheet" href="style.css">
@@ -45,7 +65,13 @@ directoryList.on('close', () => {
 	<div id="status_current_dir">ディレクトリを選択</div>
 	<div id="status_file_name"></div>
 	<div id="status_file_props"></div>
+	<div id="status_menu">
+		<div id="sort" class="status_menu_label">ソート</div>
+		<div id="menu" class="status_menu_label">メニュー</div>
+		<!--div id="rating">レーティング</div-->
+	</div>
 </div>
+<div id="sort_menu" class="menu_body" popover></div>
 <div id="dirlist" popover>
 	<p id="dirlist_msg">ディレクトリを選択：</p>
 	<div id="dirlist_dir_block">

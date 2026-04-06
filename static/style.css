@@ -27,6 +27,7 @@ body {
 	padding: 0px 8px;
 	border-right: 1px solid #666666;
 	line-height: var(--status-height);
+	white-space: nowrap;
 	cursor: pointer;
 }
 #status_current_dir:hover, #status_file_name:hover {
@@ -51,11 +52,84 @@ body {
 	padding: 0px 8px;
 	border-right: 1px solid #666666;
 	line-height: var(--status-height);
+	white-space: nowrap;
 	cursor: pointer;
 }
 #status_file_props {
 	padding: 0px 8px;
 	line-height: var(--status-height);
+	white-space: nowrap;
+	overflow: hidden;
+}
+#status_menu {
+	flex-grow: 1;
+	display: flex;
+	justify-content: right;
+	white-space: nowrap;
+}
+.status_menu_label {
+	padding: 0px 6px;
+	line-height: var(--status-height);
+	cursor: pointer;
+}
+.status_menu_label:hover, .status_menu_label.menu_label_open {
+	background: rgba(from #444444 r g b / 0.8);
+}
+.status_menu_label::before {
+	content: '';
+	width: 10px;
+	height: 6px;
+	margin-right: 6px;
+	background: #ffffff;
+	clip-path: shape(from 0% 0%, line to 100% 0%, line to 50% 100%, close);
+	vertical-align: middle;
+	display: inline-block;
+
+}
+
+.menu_body {
+	padding: 4px;
+	background: rgba(from #444444 r g b / 0.9);
+	color: #ffffff;
+	font-size: 14px;
+}
+.menu_body div {
+	padding: 0px 16px 0px 28px;
+	line-height: 28px;
+	font-size: 14px;
+	position: relative;
+	cursor: pointer;
+}
+.menu_body div:hover {
+	background: oklch(from #444444 calc(l + 0.2) c h / 0.5);
+}
+.menu_body div.menu_item_checked::before {
+	content: '';
+	width: 12px;
+	height: 12px;
+	background: #ffffff;
+	clip-path: shape(from 10% 40%, line to 40% 70%, line to 90% 10%, line to 100% 20%, line to 40% 90%, line to 0% 50%, close);
+	display: inline-block;
+	position: absolute;
+	left: 8px;
+	top: 8px;
+}
+.menu_body div.menu_item_disabled {
+	color: #999999;
+	cursor: default;
+}
+.menu_body div.menu_item_disabled:hover {
+	background: transparent;
+}
+.menu_body div.menu_partition {
+	height: 4px;
+	margin-top: 4px;
+	border-top: 1px solid #666666;
+}
+#sort_menu {
+	border: 0px;
+	position: fixed;
+	position-area: bottom span-left;
 }
 
 #filelist {
@@ -161,7 +235,6 @@ body {
 #dirlist li.dirlist_subdir_selected {
 	background: #00bb88;
 }
-
 
 .loading {
 	position: relative;
