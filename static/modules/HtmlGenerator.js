@@ -88,4 +88,12 @@ export default class HtmlGenerator {
 		return this.generate('img');
 	}
 
+	/**
+	 * inputタグ（type="text"）を生成するオブジェクトを返す
+	 * @return {object} generate()を参照
+	 */
+	static get inputText() {
+		return this.generate('input').attr('type', 'text');
+	}
+
 }

@@ -40,11 +40,12 @@ status.on('directorymenuopen', () => {
 	status.hide();
 });
 // ディレクトリが選択されたとき
-directoryList.on('select', async (dirId, subdirId, subdirName, subdirNum) => {
+directoryList.on('select', async (subdir) => {
 	// ステータスバーを更新してファイル一覧を作成
-	status.updateCurrentDirectory(subdirName, subdirNum);
-	await fileList.update(dirId, subdirId, subdirName);
-	status.updateCurrentDirectory(subdirName, fileList.length);
+	status.updateCurrentDirectory(subdir);
+	await fileList.update(subdir);
+	subdir.subdirNum = fileList.length;
+	status.updateCurrentDirectory(subdir);
 });
 // ディレクトリ選択メニューが閉じられたとき
 directoryList.on('close', () => {
@@ -56,11 +57,16 @@ sortMenu.on('sort', (sortKey, sortReversed) => {
 	fileList.setSortFunc(sortKey, sortReversed);
 	fileList.update();
 });
+// ファイル名変更が成功したとき
+status.on('filerename', (fileId, newName) => {
+	fileList.updateFileName(fileId, newName);
+});
 
 </script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<ul id="filelist"></ul>
 <div id="status">
 	<div id="status_current_dir">ディレクトリを選択</div>
 	<div id="status_file_name"></div>
@@ -72,6 +78,7 @@ sortMenu.on('sort', (sortKey, sortReversed) => {
 	</div>
 </div>
 <div id="sort_menu" class="menu_body" popover></div>
+<div id="rename" popover></div>
 <div id="dirlist" popover>
 	<p id="dirlist_msg">ディレクトリを選択：</p>
 	<div id="dirlist_dir_block">
@@ -82,7 +89,6 @@ sortMenu.on('sort', (sortKey, sortReversed) => {
 		<ul id="dirlist_subdir_list"></ul>
 	</div>
 </div>
-<ul id="filelist"></ul>
 <div id="viewer"></div>
 </body>
 </html>

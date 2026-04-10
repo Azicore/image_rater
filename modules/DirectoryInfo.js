@@ -20,8 +20,8 @@ export default class DirectoryInfo extends DataFileLoader {
 		 * 親ディレクトリのパス
 		 * @type {string}
 		 */
-		 this.dirPath = dirPath;
-		 /**
+		this.dirPath = dirPath;
+		/**
 		 * ThumbnailManagerオブジェクト
 		 * @type {ThumbnailManager}
 		 */
@@ -50,7 +50,7 @@ export default class DirectoryInfo extends DataFileLoader {
 					numFiles: subdir.files ? Object.keys(subdir.files).length : null
 				};
 			} else {
-				// 存在しないものは除外
+				// 存在しないものは除外 ●→除外ではなく行方不明フラグを立てる
 				if (subdir.files) {
 					for (const fileId in subdir.files) {
 						thumbUpdate.push(this.thumb.getUpdateInfoGenerator(fileId).delete());
@@ -104,7 +104,7 @@ export default class DirectoryInfo extends DataFileLoader {
 			if (stats && stats.isFile() && stats.size == file.s && Math.floor(stats.mtimeMs / 1000) == file.m) {
 				fileNames.push(fileName);
 				files[fileId] = file;
-			// 存在しないものと変更されたものは除外
+			// 存在しないものと変更されたものは除外 ●→変更するとレーティングが消えるが問題ないか？
 			} else {
 				delete subdir.files[fileId];
 				thumbUpdate.push(this.thumb.getUpdateInfoGenerator(fileId).delete());
@@ -149,6 +149,61 @@ export default class DirectoryInfo extends DataFileLoader {
 		this.thumb.update(thumbUpdate);
 		this._save();
 		return files;
+	}
+
+	/**
+	 * ファイル名を変更する
+	 * @param {string} subdirId - サブディレクトリID
+	 * @param {string} fileId - ファイルID
+	 * @param {string} newName - 新しい名前
+	 * @return {object} 成功時はオブジェクトを返す
+	 */
+	renameFile(subdirId, fileId, newName) {
+		const subdir = this.data[subdirId];
+		if (!subdir || !subdir.files) throw new Error('不明なディレクトリが指定されています。');
+		const file = subdir.files[fileId];
+		if (!file) throw new Error('不明なファイルが指定されています。');
+		if (newName === '') throw new Error('新しいファイル名を入力して下さい。');
+		if (/[\x00-\x1F\/:\\\x7F]/.test(newName)) throw new Error('ファイル名に使用できない文字が含まれています。');
+		if (file.n == newName) throw new Error('変更後の名前が元の名前と同じです。');
+		const oldPath = path.join(this.dirPath, subdir.name, file.n);
+		const newPath = path.join(this.dirPath, subdir.name, newName);
+		if (!fs.existsSync(oldPath)) throw new Error('ファイルが見つかりません。');
+		if (fs.existsSync(newPath)) throw new Error('同じ名前のファイルがすでに存在します。');
+		try {
+			fs.renameSync(oldPath, newPath);
+			file.n = newName;
+			this._save();
+			return { ok: true, oldPath, newPath };
+		} catch (e) {
+			throw new Error('ファイル操作中に不明なエラーが発生しました。');
+		}
+	}
+
+	/**
+	 * サブディレクトリ名を変更する
+	 * @param {string} subdirId - サブディレクトリID
+	 * @param {string} newName - 新しい名前
+	 * @return {object} 成功時はオブジェクトを返す
+	 */
+	renameSubdir(subdirId, newName) {
+		const subdir = this.data[subdirId];
+		if (!subdir) throw new Error('不明なディレクトリが指定されています。');
+		if (newName === '') throw new Error('新しいディレクトリ名を入力して下さい。');
+		if (/[\x00-\x1F\/:\\\x7F]/.test(newName)) throw new Error('ディレクトリ名に使用できない文字が含まれています。');
+		if (subdir.name == newName) throw new Error('変更後の名前が元の名前と同じです。');
+		const oldPath = path.join(this.dirPath, subdir.name);
+		const newPath = path.join(this.dirPath, newName);
+		if (!fs.existsSync(oldPath)) throw new Error('ディレクトリが見つかりません。');
+		if (fs.existsSync(newPath)) throw new Error('同じ名前のディレクトリがすでに存在します。');
+		try {
+			fs.renameSync(oldPath, newPath);
+			subdir.name = newName;
+			this._save();
+			return { ok: true, oldPath, newPath };
+		} catch (e) {
+			throw new Error('ディレクトリ操作中に不明なエラーが発生しました。');
+		}
 	}
 
 }

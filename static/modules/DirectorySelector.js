@@ -85,7 +85,7 @@ export default class DirectorySelector extends EventDispatchable {
 				const dirId = this.elSubdirList.dataset.dirId;
 				const subdirName = li.dataset.subdirName;
 				const subdirNum = li.dataset.subdirNum;
-				this.trigger('select', dirId, subdirId, subdirName, subdirNum);
+				this.trigger('select', { dirId, subdirId, subdirName, subdirNum });
 				this.current = { dirId, subdirId };
 				this.updateRequired = true;
 			}
@@ -152,23 +152,23 @@ export default class DirectorySelector extends EventDispatchable {
 	 */
 	async _createSubdirectoryList(dirId) {
 		const HTML = HtmlGenerator;
-		this.elSubdirBlock.classList.add('loading');
-		this.elSubdirList.innerHTML = '';
+		this.container.classList.add('loading');
 		this.elCurrDir.innerText = this.dirs[dirId].title;
 		this._switchTo('subdir');
 		const subdirs = await API.getSubdirectoryList(dirId);
+		subdirs.sort((a, b) => a.name > b.name ? 1 : -1);
 		this.elSubdirList.innerHTML = '';
 		this.elSubdirList.dataset.dirId = dirId;
-		for (const subdirId in subdirs) {
-			const subdir = subdirs[subdirId];
+		for (const subdir of subdirs) {
+			const subdirId = subdir.subdirId;
 			this.elSubdirList.appendChild(
 				HTML.li.data({ subdirId: subdirId, subdirName: subdir.name, subdirNum: subdir.numFiles ?? '' }).cls(subdirId == this.current.subdirId ? 'dirlist_subdir_selected' : []).end(
 					HTML.span.cls('dirlist_subdir_name').end(subdir.name),
-					HTML.span.cls('dirlist_subdir_num').end(subdir.numFiles ? `(${subdir.numFiles})` : '')
+					HTML.span.cls('dirlist_subdir_num').end(subdir.numFiles != null ? `(${subdir.numFiles})` : '')
 				)
 			);
 		}
-		this.elSubdirBlock.classList.remove('loading');
+		this.container.classList.remove('loading');
 	}
 
 }

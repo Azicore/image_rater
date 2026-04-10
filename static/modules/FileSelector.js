@@ -78,7 +78,9 @@ export default class FileSelector extends EventDispatchable {
 			top: parseInt(paddingTop, 10) || 0,
 			bottom: parseInt(paddingBottom, 10) || 0
 		}))(getComputedStyle(this.container));
-		
+		// 更新系API通信時のローディング表示とエラー表示
+		API.toggleLoading = (toggle) => this.container.classList.toggle('loading', toggle);
+		API.notifyError = (msg) => alert(msg);
 	}
 
 	/**
@@ -170,20 +172,22 @@ export default class FileSelector extends EventDispatchable {
 
 	/**
 	 * ファイル一覧を更新する
-	 * @param {string} [dirId] - ディレクトリID
-	 * @param {string} [subdirId] - サブディレクトリID
-	 * @param {string} [subdirName] - サブディレクトリ名
+	 * @param {object} [subdir] - サブディレクトリ情報オブジェクト
+	 * @param {string} [subdir.dirId] - ディレクトリID
+	 * @param {string} [subdir.subdirId] - サブディレクトリID
+	 * @param {string} [subdir.subdirName] - サブディレクトリ名
 	 */
-	async update(dirId, subdirId, subdirName) {
+	async update(subdir) {
 		// ディレクトリが指定された場合は再取得
-		if (dirId && subdirId && subdirName) {
+		if (subdir && subdir.dirId && subdir.subdirId && subdir.subdirName) {
+			const { dirId, subdirId, subdirName } = subdir;
 			this.dirId = dirId;
 			this.subdirName = subdirName;
 			this.selectedFiles.clear(); // 選択を全解除
-			this.container.innerHTML = '';
 			this.container.classList.add('loading');
 			this.files = await API.getFileList(dirId, subdirId);
 			this.files.forEach(file => { file.d = file.w * file.h }); // 画素数を計算しておく
+			this.container.innerHTML = '';
 			this.container.classList.remove('loading');
 		}
 		if (this.files.length == 0) {
@@ -200,6 +204,22 @@ export default class FileSelector extends EventDispatchable {
 			this.elems = this.files.map(file => file.elem);
 			this.selectedFiles.set(this.elems[0]); // 最初のファイルを選択
 		}
+	}
+
+	/**
+	 * ファイル名を変更する
+	 * @param {string} fileId - 変更するファイルのファイルID
+	 * @param {string} newName - 新しい名前
+	 */
+	async updateFileName(fileId, newName) {
+		const file = this.files.find(file => file.id == fileId);
+		if (!file) return;
+		file.n = newName;
+		this.container.removeChild(file.elem);
+		file.elem = this._createItemElement(file);
+		this.container.appendChild(file.elem);
+		await this.update();
+		this.selectedFiles.set(file.elem);
 	}
 
 	/**

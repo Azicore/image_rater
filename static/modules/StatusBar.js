@@ -1,5 +1,6 @@
 import EventDispatchable from './EventDispatchable.js';
 import HtmlGenerator from './HtmlGenerator.js';
+import RenamePopup from './RenamePopup.js';
 
 /**
  * ステータスバーを表すクラス
@@ -11,13 +12,39 @@ export default class StatusBar extends EventDispatchable {
 	 */
 	constructor() {
 		super();
+		/**
+		 * メイン要素
+		 * @type {HTMLElement}
+		 */
 		this.container = document.getElementById('status');
+		/**
+		 * 現在のサブディレクトリを表示する要素
+		 * @type {HTMLElement}
+		 */
 		this.elCurrentDir = document.getElementById('status_current_dir');
+		/**
+		 * ファイル名を表示する要素
+		 * @type {HTMLElement}
+		 */
 		this.elFileName = document.getElementById('status_file_name');
+		/**
+		 * ファイル情報を表示する要素
+		 * @type {HTMLElement}
+		 */
 		this.elFileProps = document.getElementById('status_file_props');
+		/**
+		 * 名前変更のポップアップ
+		 * @type {RenamePopup}
+		 */
+		this.rename = new RenamePopup();
 
-		this._defineEvents('directorymenuopen');
+		this._defineEvents('directorymenuopen', 'filerename');
 		this._setEventHandlers();
+		// 名前変更に成功したら表示を変更してfilerenameイベントを発火する
+		this.rename.on('filerename', (fileId, newName) => {
+			this.elFileName.innerText = newName;
+			this.trigger('filerename', fileId, newName);
+		});
 	}
 
 	/**
@@ -26,6 +53,9 @@ export default class StatusBar extends EventDispatchable {
 	_setEventHandlers() {
 		this.elCurrentDir.addEventListener('click', (e) => {
 			this.trigger('directorymenuopen');
+		});
+		this.elFileName.addEventListener('click', (e) => {
+			this.rename.openFileRename(this.elFileName);
 		});
 	}
 
@@ -45,14 +75,19 @@ export default class StatusBar extends EventDispatchable {
 
 	/**
 	 * 現在のサブディレクトリ名を設定する
-	 * @param {string} name - サブディレクトリ名
-	 * @param {string} num - ファイル数
+	 * @param {object} subdir - サブディレクトリ情報オブジェクト
+	 * @param {string} subdir.dirId - ディレクトリID
+	 * @param {string} subdir.subdirId - サブディレクトリID
+	 * @param {string} subdir.subdirName - サブディレクトリ名
+	 * @param {number} subdir.subdirNum - サブディレクトリのファイル数
 	 */
-	updateCurrentDirectory(name, num) {
+	updateCurrentDirectory(subdir) {
+		const { subdirName, subdirNum } = subdir;
 		const HTML = HtmlGenerator;
 		this.elCurrentDir.innerHTML = '';
-		this.elCurrentDir.appendChild(HTML.span.cls('status_subdir_name').end(name));
-		if (num !== '') this.elCurrentDir.appendChild(HTML.span.cls('status_subdir_num').end(`(${num})`));
+		this.elCurrentDir.appendChild(HTML.span.cls('status_subdir_name').end(subdirName));
+		if (subdirNum !== '') this.elCurrentDir.appendChild(HTML.span.cls('status_subdir_num').end(`(${subdirNum})`));
+		this.rename.subdir = subdir;
 	}
 
 	/**
@@ -84,6 +119,7 @@ export default class StatusBar extends EventDispatchable {
 	/**
 	 * ファイル情報を表示する
 	 * @param {object|number} file - APIから返されたファイル情報オブジェクト、または、選択されたファイル数
+	 * @param {string} file.id - ファイルID
 	 * @param {string} file.n - ファイル名
 	 * @param {number} file.w - メディアの幅
 	 * @param {number} file.h - メディアの高さ
@@ -99,6 +135,9 @@ export default class StatusBar extends EventDispatchable {
 			this.elFileName.innerText = file.n;
 			this.elFileProps.innerText = `${file.w}×${file.h} / ${this._formatFileSize(file.s)} / ${this._formatDate(file.m)}`;
 		}
+		this.rename.close();
+		this.rename.fileId = file.id;
+		this.rename.fileName = file.n;
 	}
 
 }

@@ -18,16 +18,16 @@ export default class DataFileLoader {
 		 * データファイルの内容
 		 * @type {object}
 		 */
-		 this.data = {};
+		this.data = {};
 	}
 
 	/**
 	 * データファイルを読み込む
 	 * @param {string} dataFilePath - データファイルのパス
 	 */
-	 _load(dataFilePath) {
-		 if (dataFilePath) this.DATA_FILE = dataFilePath;
-		 if (!this.DATA_FILE) return;
+	_load(dataFilePath) {
+		if (dataFilePath) this.DATA_FILE = dataFilePath;
+		if (!this.DATA_FILE) return;
 		try {
 			this.data = JSON.parse(fs.readFileSync(this.DATA_FILE));
 		} catch (e) { }

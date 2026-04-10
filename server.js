@@ -15,6 +15,8 @@ const thumb = new ThumbnailManager();
 
 const app = express();
 
+app.use(express.json());
+
 app.use('/', (req, res, next) => {
 	res.set('Cache-Control', 'no-cache');
 	next();
@@ -29,7 +31,7 @@ app.get('/dirs', (req, res, next) => {
 // サブディレクトリ一覧・ファイル一覧を返す
 app.get(['/dir/:dirId', '/dir/:dirId/:subdirId'], async (req, res, next) => {
 	const { dirId, subdirId } = req.params;
-	const { path: dirPath } = config.data.directories[dirId];
+	const { path: dirPath } = config.data.directories[dirId] || {};
 	if (dirPath == null) {
 		return res.json({ error: true });
 	}
@@ -45,6 +47,7 @@ app.get(['/dir/:dirId', '/dir/:dirId/:subdirId'], async (req, res, next) => {
 	}
 });
 
+// サムネイル画像を返す
 app.get('/thumb/:fileId', async (req, res, next) => {
 	const { fileId } = req.params;
 	const thumbName = await thumb.get(fileId);
@@ -60,7 +63,7 @@ app.get('/thumb/:fileId', async (req, res, next) => {
 // 画像ファイル本体を返す
 app.get('/file/:dirId/:subdirName/:fileName', (req, res, next) => {
 	const { dirId, subdirName, fileName } = req.params;
-	const { path: dirPath } = config.data.directories[dirId];
+	const { path: dirPath } = config.data.directories[dirId] || {};
 	if (dirPath == null) {
 		return res.sendStatus(404);
 	}
@@ -70,11 +73,23 @@ app.get('/file/:dirId/:subdirName/:fileName', (req, res, next) => {
 	});
 });
 
-app.get('/rename', (req, res, next) => {
-
+// ファイル名を変更する
+app.post('/rename', (req, res, next) => {
+	const { dirId, subdirId, fileId, newName } = req.body;
+	const { path: dirPath } = config.data.directories[dirId] || {};
+	const dirInfo = new DirectoryInfo(dirPath);
+	try {
+		if (fileId) {
+			res.json(dirInfo.renameFile(subdirId, fileId, newName));
+		} else {
+			res.json(dirInfo.renameSubdir(subdirId, newName));
+		}
+	} catch (e) {
+		res.json({ error: true, message: e.message });
+	}
 });
 
-app.get('/move', (req, res, next) => {
+app.post('/move', (req, res, next) => {
 
 });
 

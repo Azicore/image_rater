@@ -9,6 +9,10 @@ body {
 }
 :root {
 	--status-height: 32px;
+	--loading-width: 100vw;
+	--loading-margin-top: 0px;
+	--loading-scale: 50%;
+	--loading-color: #cccccc;
 }
 #status {
 	width: 100%;
@@ -19,6 +23,8 @@ body {
 	align-items: center;
 	font-size: 13px;
 	transition: transform 0.2s;
+	left: 0px;
+	top: 0px;
 }
 #status.status_hidden {
 	transform: translateY(calc(-1 * var(--status-height)));
@@ -132,6 +138,36 @@ body {
 	position-area: bottom span-left;
 }
 
+#rename {
+	border: 1px solid #999999;
+	background: rgba(from #333333 r g b / 0.8);
+	color: #ffffff;
+	position: fixed;
+	position-area: bottom span-right;
+}
+#rename > div {
+	display: none;
+}
+#rename > div.rename_displayed {
+	display: block;
+}
+#rename p {
+	margin: 8px;
+	font-size: 13px;
+}
+#rename input {
+	width: 200px;
+	padding: 4px;
+	border: 0px;
+	background: #007788;
+	color: #ffffff;
+	font-size: 14px;
+	outline: 0px;
+}
+#rename input:disabled {
+	background: #666666;
+}
+
 #filelist {
 	padding-top: var(--status-height);
 	display: flex;
@@ -139,9 +175,7 @@ body {
 	align-items: center;
 	list-style-type: none;
 	user-select: none;
-	--loading-color: #cccccc;
 	--loading-margin-top: 72px;
-	--loading-scale: 50%;
 }
 #filelist li {
 	margin: 4px;
@@ -179,6 +213,11 @@ body {
 	background: rgba(from #444444 r g b / 0.9);
 	color: #ffffff;
 	overflow-x: hidden;
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	--loading-width: 360px;
+	--loading-margin-top: 64px;
 }
 #dirlist_msg {
 	margin: 12px 8px;
@@ -218,9 +257,9 @@ body {
 	line-break: anywhere;
 	cursor: pointer;
 }
-.dirlist_dir_title {
+/*.dirlist_dir_title {
 
-}
+}*/
 .dirlist_dir_path {
 	font-size: 12px;
 	color: #00bb88;
@@ -239,10 +278,17 @@ body {
 .loading {
 	position: relative;
 }
-.loading * {
-	display: none;
-}
 .loading::before {
+	content: '';
+	width: var(--loading-width);
+	height: 100%;
+	backdrop-filter: brightness(0.6);
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	z-index: 1;
+}
+.loading::after {
 	content: '';
 	width: 100px;
 	height: 100px;
@@ -250,9 +296,10 @@ body {
 	background: conic-gradient(transparent 0deg, transparent var(--loading-angle), var(--loading-color) var(--loading-angle), var(--loading-color) calc(360deg - var(--loading-angle)), transparent calc(360deg - var(--loading-angle)), transparent 360deg);
 	clip-path: path(evenodd, 'M 0 0 L 100 0 L 100 100 L 0 100 L 0 0 L 50 10 A 40 40 0 1 0 50.001 10 Z');
 	animation: 1s linear infinite loading;
-	position: absolute;
-	left: calc(50% - 50px);
+	position: fixed;
+	left: calc(calc(var(--loading-width) / 2) - 50px);
 	top: var(--loading-margin-top);
+	z-index: 1;
 }
 @property --loading-angle {
 	syntax: '<angle>';
