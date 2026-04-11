@@ -1,3 +1,4 @@
+import fs from 'fs';
 import sharp from 'sharp';
 
 /**
@@ -45,7 +46,9 @@ export default class MediaFile {
 	 */
 	async createThumbnail(outputPath, thumbWidth, thumbHeight) {
 		console.log(`createThumbnail: ${this.filePath}`);
-		await sharp(this.filePath).resize(thumbWidth, thumbHeight).webp({ quality: 80 }).toFile(outputPath);
+		// ※sharpにfilePathを直接渡すと内部でロックが解放されなくなることがあるため、代わりに事前にreadFileで取得したBufferを渡す。
+		const buf = fs.readFileSync(this.filePath);
+		await sharp(buf).resize(thumbWidth, thumbHeight).webp({ quality: 80 }).toFile(outputPath);
 	}
 
 }

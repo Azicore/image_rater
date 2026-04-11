@@ -1,6 +1,7 @@
 import EventDispatchable from './EventDispatchable.js';
 import ExclusiveClassName from './ExclusiveClassName.js';
 import HtmlGenerator from './HtmlGenerator.js';
+import Subdirectory from './Subdirectory.js';
 import API from './API.js';
 
 /**
@@ -44,6 +45,11 @@ export default class DirectorySelector extends EventDispatchable {
 		 */
 		this.elCurrDir = document.getElementById('dirlist_curr');
 		/**
+		 * 文言を表示する要素
+		 * @type {HTMLElement}
+		 */
+		this.elMessage = document.getElementById('dirlist_msg');
+		/**
 		 * 選択中の親ディレクトリとサブディレクトリ
 		 * @type {object}
 		 */
@@ -58,8 +64,13 @@ export default class DirectorySelector extends EventDispatchable {
 		 * @type {ExclusiveClassName}
 		 */
 		this.displayedPanelClass = new ExclusiveClassName('dirlist_block_displayed');
+		/**
+		 * 移動モードかどうか
+		 * @type {boolean}
+		 */
+		this.isMoveMode = false;
 
-		this._defineEvents('select', 'close');
+		this._defineEvents('select', 'close', 'filemove');
 		this._setEventHandlers();
 		this._createDirectoryList();
 	}
@@ -85,14 +96,19 @@ export default class DirectorySelector extends EventDispatchable {
 				const dirId = this.elSubdirList.dataset.dirId;
 				const subdirName = li.dataset.subdirName;
 				const subdirNum = li.dataset.subdirNum;
-				this.trigger('select', { dirId, subdirId, subdirName, subdirNum });
-				this.current = { dirId, subdirId };
+				const eventName = this.isMoveMode ? 'filemove' : 'select';
+				this.trigger(eventName, new Subdirectory({ dirId, subdirId, subdirName, subdirNum }));
+				if (!this.isMoveMode) {
+					this.current = { dirId, subdirId };
+				}
 				this.updateRequired = true;
 			}
 			this.container.hidePopover();
 		});
 		// 親ディレクトリ選択へ戻るとき
 		this.elCurrDir.addEventListener('click', (e) => {
+			// 移動モードのときは使用不可
+			if (this.isMoveMode) return;
 			this._switchTo('dir');
 		});
 		// 閉じるとき
@@ -104,8 +120,9 @@ export default class DirectorySelector extends EventDispatchable {
 
 	/**
 	 * ディレクトリ選択メニューを表示する
+	 * @param {boolean} [isMoveMode=false] - 移動モードかどうか
 	 */
-	show() {
+	show(isMoveMode = false) {
 		if (this.current.dirId) {
 			if (this.updateRequired) {
 				this._createSubdirectoryList(this.current.dirId);
@@ -115,7 +132,10 @@ export default class DirectorySelector extends EventDispatchable {
 			// サブディレクトリ未選択時（初期状態）は、親ディレクトリ一覧を表示
 			this._switchTo('dir');
 		}
+		this.elMessage.innerText = isMoveMode ? '移動先を選択：' : 'ディレクトリを選択：';
+		this.elCurrDir.classList.toggle('dirlist_curr_disabled', isMoveMode);
 		this.updateRequired = false;
+		this.isMoveMode = isMoveMode;
 		this.container.showPopover();
 	}
 

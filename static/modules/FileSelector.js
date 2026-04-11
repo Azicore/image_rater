@@ -30,15 +30,10 @@ export default class FileSelector extends EventDispatchable {
 		 */
 		this.elems = [];
 		/**
-		 * 表示中のサブディレクトリの親ディレクトリID
-		 * @type {string}
+		 * 表示中のサブディレクトリ
+		 * @type {Subdirectory}
 		 */
-		this.dirId = null;
-		/**
-		 * 表示中のサブディレクトリの名前
-		 * @type {string}
-		 */
-		this.subdirName = null;
+		this.subdir = null;
 		/**
 		 * 選択中のファイルを表すSelectedFilesオブジェクト
 		 * @type {SelectedFiles}
@@ -167,22 +162,18 @@ export default class FileSelector extends EventDispatchable {
 	 */
 	openFile(elem) {
 		// fileopenイベントを発動する
-		this.trigger('fileopen', this.dirId, this.subdirName, elem.dataset.fileName);
+		this.trigger('fileopen', this.subdir, elem.dataset.fileName);
 	}
 
 	/**
 	 * ファイル一覧を更新する
-	 * @param {object} [subdir] - サブディレクトリ情報オブジェクト
-	 * @param {string} [subdir.dirId] - ディレクトリID
-	 * @param {string} [subdir.subdirId] - サブディレクトリID
-	 * @param {string} [subdir.subdirName] - サブディレクトリ名
+	 * @param {Subdirectory} [subdir] - サブディレクトリ情報オブジェクト
 	 */
 	async update(subdir) {
 		// ディレクトリが指定された場合は再取得
-		if (subdir && subdir.dirId && subdir.subdirId && subdir.subdirName) {
-			const { dirId, subdirId, subdirName } = subdir;
-			this.dirId = dirId;
-			this.subdirName = subdirName;
+		if (subdir) {
+			const { dirId, subdirId } = subdir;
+			this.subdir = subdir;
 			this.selectedFiles.clear(); // 選択を全解除
 			this.container.classList.add('loading');
 			this.files = await API.getFileList(dirId, subdirId);
@@ -241,21 +232,34 @@ export default class FileSelector extends EventDispatchable {
 		);
 	}
 
-/*	// 選択したファイルを取り除く
-	removeSelected() {
-		for (let i = 0; this.selectedFiles.length > i; i++) {
-			const n = this.selectedFiles[i].dataset.itemN;
-			const elem = this.files[n].elem;
-			this.container.removeChild(elem);
-			delete this.files[n].elem;
+	/**
+	 * 選択中のファイルを移動する
+	 * @param {Subdirectory} newSubdir - 移動先のサブディレクトリ
+	 * @return {Subdirectory} 現在のサブディレクトリ
+	 */
+	async moveFile(newSubdir) {
+		const fileIds = Array.from(this.selectedFiles, (elem) => this.files[elem.dataset.itemN].id);
+		const movedFileIds = await API.move(this.subdir, fileIds, newSubdir.subdirId);
+		this.selectedFiles.clear();
+		let i = 0;
+		for (const file of this.files) {
+			if (movedFileIds.includes(file.id)) {
+				const elem = file.elem;
+				this.container.removeChild(elem);
+				delete file.elem;
+			} else {
+				file.elem.dataset.itemN = i++;
+			}
 		}
-		this.files = this.files.filter(item => item.elem);
-		this.elems = this.files.map(item => item.elem);
+		this.files = this.files.filter(file => file.elem);
+		this.elems = this.files.map(file => file.elem);
+		this.subdir.subdirNum -= movedFileIds.length; // ファイル数を更新する
 		if (this.files.length == 0) {
 			//●ファイルがありません
 		} else {
 			this.selectedFiles.set(this.elems[0]);
 		}
-	}*/
+		return this.subdir;
+	}
 
 }

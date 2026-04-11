@@ -176,8 +176,60 @@ export default class DirectoryInfo extends DataFileLoader {
 			this._save();
 			return { ok: true, oldPath, newPath };
 		} catch (e) {
+			console.log(`Error: DirectoryInfo#renameFile: ${e.message}`);
 			throw new Error('ファイル操作中に不明なエラーが発生しました。');
 		}
+	}
+
+	/**
+	 * ファイルを別のサブディレクトリへ移動する
+	 * @param {string} subdirId - サブディレクトリID
+	 * @param {string[]} fileIds - 移動するファイルのファイルID
+	 * @param {string} newSubdirId - 移動先のサブディレクトリID
+	 * @return {object} 成功時はオブジェクトを返す
+	 */
+	moveFile(subdirId, fileIds, newSubdirId) {
+		const subdir = this.data[subdirId];
+		const newSubdir = this.data[newSubdirId];
+		if (!subdir || !subdir.files) throw new Error('不明なディレクトリが指定されています。');
+		if (subdirId == newSubdirId) throw new Error('移動先が同じディレクトリです。');
+		if (!newSubdir) throw new Error('不明なディレクトリが指定されています。');
+		if (!newSubdir.files) {
+			newSubdir.files = {};
+		}
+		const newSubdirPath = path.join(this.dirPath, newSubdir.name);
+		if (!fs.existsSync(newSubdirPath)) throw new Error('移動先のディレクトリが見つかりません。');
+		const movedFileIds = [];
+		for (const fileId of fileIds) {
+			const file = subdir.files[fileId];
+			if (!file) {
+				if (fileIds.length > 1) continue;
+				throw new Error('不明なファイルが指定されています。');
+			}
+			const oldPath = path.join(this.dirPath, subdir.name, file.n);
+			const newPath = path.join(this.dirPath, newSubdir.name, file.n);
+			if (!fs.existsSync(oldPath)) {
+				if (fileIds.length > 1) continue;
+				throw new Error('ファイルが見つかりません。');
+			}
+			if (fs.existsSync(newPath)) {
+				if (fileIds.length > 1) continue;
+				throw new Error('同じ名前のファイルがすでに存在します。');
+			}
+			try {
+				fs.renameSync(oldPath, newPath);
+			} catch (e) {
+				console.log(`Error: DirectoryInfo#moveFile: ${e.message}`);
+				if (fileIds.length > 1) continue;
+				throw new Error('ファイル操作中に不明なエラーが発生しました。');
+			}
+			newSubdir.files[fileId] = file;
+			delete subdir.files[fileId];
+			movedFileIds.push(fileId);
+		}
+		this._save();
+		const msg = movedFileIds.length == fileIds.length ? null : '移動できなかったファイルがあります。';
+		return { ok: true, moved: movedFileIds, message: msg };
 	}
 
 	/**

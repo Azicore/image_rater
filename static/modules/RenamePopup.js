@@ -41,7 +41,7 @@ export default class RenamePopup extends EventDispatchable {
 		this.displayedBlockClass = new ExclusiveClassName('rename_displayed');
 		/**
 		 * 現在のサブディレクトリ
-		 * @type {object}
+		 * @type {Subdirectory}
 		 */
 		this.subdir = null;
 		/**

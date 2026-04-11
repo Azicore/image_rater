@@ -75,11 +75,7 @@ export default class StatusBar extends EventDispatchable {
 
 	/**
 	 * 現在のサブディレクトリ名を設定する
-	 * @param {object} subdir - サブディレクトリ情報オブジェクト
-	 * @param {string} subdir.dirId - ディレクトリID
-	 * @param {string} subdir.subdirId - サブディレクトリID
-	 * @param {string} subdir.subdirName - サブディレクトリ名
-	 * @param {number} subdir.subdirNum - サブディレクトリのファイル数
+	 * @param {Subdirectory} subdir - サブディレクトリ情報オブジェクト
 	 */
 	updateCurrentDirectory(subdir) {
 		const { subdirName, subdirNum } = subdir;

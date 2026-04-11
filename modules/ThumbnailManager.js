@@ -151,7 +151,11 @@ export default class ThumbnailManager extends DataFileLoader {
 	 * @param {string} fileId - ファイルID
 	 */
 	_delete(fileId) {
-		fs.rmSync(path.join(this.THUMB_DIR, `${fileId}.webp`));
+		try {
+			fs.rmSync(path.join(this.THUMB_DIR, `${fileId}.webp`));
+		} catch (e) {
+			console.log(`Error: ThumbnailManager#_delete: ${e.message}`);
+		}
 	}
 
 }

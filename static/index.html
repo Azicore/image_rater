@@ -9,6 +9,7 @@ import StatusBar from './modules/StatusBar.js';
 import DirectorySelector from './modules/DirectorySelector.js';
 import FileSelector from './modules/FileSelector.js';
 import MediaViewer from './modules/MediaViewer.js';
+import MainMenu from './modules/MainMenu.js';
 import SortMenu from './modules/SortMenu.js';
 
 const config = new LocalConfig();
@@ -16,17 +17,20 @@ const status = new StatusBar();
 const directoryList = new DirectorySelector();
 const fileList = new FileSelector(config);
 const viewer = new MediaViewer();
+const mainMenu = new MainMenu(config);
 const sortMenu = new SortMenu(config);
 
 // ファイルが選択されたとき
 fileList.on('select', (file) => {
 	// ステータスバーを更新する
 	status.updateFileStatus(file);
+	// 選択可能なメニュー項目を更新する
+	mainMenu.toggleDisabled('move', file === 0);
 });
 // ファイルが開かれたとき
-fileList.on('fileopen', (dirId, subdirName, fileName) => {
+fileList.on('fileopen', (subdir, fileName) => {
 	// ビューアを起動する
-	viewer.open(dirId, subdirName, fileName);
+	viewer.open(subdir, fileName);
 	fileList.disabled = true;
 });
 // ビューアが閉じられたとき
@@ -41,10 +45,16 @@ status.on('directorymenuopen', () => {
 });
 // ディレクトリが選択されたとき
 directoryList.on('select', async (subdir) => {
-	// ステータスバーを更新してファイル一覧を作成
+	// ステータスバーを更新してファイル一覧を作成する
 	status.updateCurrentDirectory(subdir);
 	await fileList.update(subdir);
 	subdir.subdirNum = fileList.length;
+	status.updateCurrentDirectory(subdir);
+});
+// ファイルの移動先が選択されたとき
+directoryList.on('filemove', async (newSubdir) => {
+	// ファイル移動を実行する
+	const subdir = await fileList.moveFile(newSubdir);
 	status.updateCurrentDirectory(subdir);
 });
 // ディレクトリ選択メニューが閉じられたとき
@@ -53,13 +63,18 @@ directoryList.on('close', () => {
 });
 // ソートが選択されたとき
 sortMenu.on('sort', (sortKey, sortReversed) => {
-	// ファイル一覧を更新
+	// ファイル一覧を更新する
 	fileList.setSortFunc(sortKey, sortReversed);
 	fileList.update();
 });
 // ファイル名変更が成功したとき
 status.on('filerename', (fileId, newName) => {
 	fileList.updateFileName(fileId, newName);
+});
+// メニューからファイル移動が選択されたとき
+mainMenu.on('filemove', () => {
+	directoryList.show(true);
+	status.hide();
 });
 
 </script>
@@ -78,6 +93,7 @@ status.on('filerename', (fileId, newName) => {
 	</div>
 </div>
 <div id="sort_menu" class="menu_body" popover></div>
+<div id="main_menu" class="menu_body" popover></div>
 <div id="rename" popover></div>
 <div id="dirlist" popover>
 	<p id="dirlist_msg">ディレクトリを選択：</p>

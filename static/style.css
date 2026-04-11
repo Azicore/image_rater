@@ -132,7 +132,7 @@ body {
 	margin-top: 4px;
 	border-top: 1px solid #666666;
 }
-#sort_menu {
+#main_menu, #sort_menu {
 	border: 0px;
 	position: fixed;
 	position-area: bottom span-left;
@@ -237,6 +237,10 @@ body {
 }
 #dirlist_curr:hover {
 	background: oklch(from #007788 calc(l + 0.05) c h);
+}
+#dirlist_curr.dirlist_curr_disabled, #dirlist_curr.dirlist_curr_disabled:hover {
+	background: #666666;
+	cursor: default;
 }
 #dirlist_dir_block, #dirlist_subdir_block {
 	display: none;

@@ -54,12 +54,12 @@ export default class MediaViewer extends EventDispatchable {
 
 	/**
 	 * ビューアでメディアを開く
-	 * @param {string} dirId - ディレクトリID
-	 * @param {string} subdirName - サブディレクトリの名前
+	 * @param {Subdirectory} subdir - サブディレクトリ情報オブジェクト
 	 * @param {string} fileName - ファイルの名前
 	 */
-	async open(dirId, subdirName, fileName) {
+	async open(subdir, fileName) {
 		const HTML = HtmlGenerator;
+		const { dirId, subdirName } = subdir;
 		this.disabled = false;
 		this.container.innerHTML = '';
 		this.container.appendChild(

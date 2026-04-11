@@ -112,9 +112,7 @@ export default class API {
 
 	/**
 	 * ファイル名を変更する
-	 * @param {object} subdir - サブディレクトリ情報オブジェクト
-	 * @param {string} subdir.dirId - ディレクトリID
-	 * @param {string} subdir.subdirId - サブディレクトリID
+	 * @param {Subdirectory} subdir - サブディレクトリ情報オブジェクト
 	 * @param {string} fileId - ファイルID
 	 * @param {string} newName - 新しい名前
 	 * @return {boolean} 成功したかどうか
@@ -132,5 +130,25 @@ export default class API {
 		return !result.error;
 	}
 
+	/**
+	 * ファイルを移動する
+	 * @param {Subdirectory} subdir - サブディレクトリ情報オブジェクト
+	 * @param {string[]} fileIds - ファイルIDの配列
+	 * @param {string} newSubdirId - 移動先のサブディレクトリID
+	 * @return {string[]} fileIdsのうち移動に成功したファイルIDの配列
+	 */
+	static async move(subdir, fileIds, newSubdirId) {
+		this.toggleLoading(true);
+		const result = await this._post('/move', {
+			dirId: subdir.dirId,
+			subdirId: subdir.subdirId,
+			fileIds: fileIds,
+			newSubdirId: newSubdirId
+		});
+		const movedFileIds = result.moved || [];
+		if (result.error || result.message) this.notifyError(result.message);
+		this.toggleLoading(false);
+		return movedFileIds;
+	}
 
 }

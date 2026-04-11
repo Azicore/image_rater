@@ -89,8 +89,16 @@ app.post('/rename', (req, res, next) => {
 	}
 });
 
+// ファイルを移動する
 app.post('/move', (req, res, next) => {
-
+	const { dirId, subdirId, fileIds, newSubdirId } = req.body;
+	const { path: dirPath } = config.data.directories[dirId] || {};
+	const dirInfo = new DirectoryInfo(dirPath);
+	try {
+		res.json(dirInfo.moveFile(subdirId, fileIds, newSubdirId));
+	} catch (e) {
+		res.json({ error: true, message: e.message });
+	}
 });
 
 // index.htmlを返す
