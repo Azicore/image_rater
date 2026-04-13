@@ -1,7 +1,7 @@
 /**
  * サブディレクトリを表すクラス
  */
-export default class Subdirectory {
+export default class SubdirectoryInfo {
 
 	/**
 	 * コンストラクタ

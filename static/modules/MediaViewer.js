@@ -49,7 +49,7 @@ export default class MediaViewer extends EventDispatchable {
 
 	/**
 	 * ビューアでメディアを開く
-	 * @param {Subdirectory} subdir - サブディレクトリ情報オブジェクト
+	 * @param {SubdirectoryInfo} subdir - サブディレクトリ情報オブジェクト
 	 * @param {string} fileName - ファイルの名前
 	 */
 	async open(subdir, fileName) {

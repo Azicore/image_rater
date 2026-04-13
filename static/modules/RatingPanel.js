@@ -1,7 +1,7 @@
 import EventDispatchable from './EventDispatchable.js';
 import KeyEventManager from './KeyEventManager.js';
 import HtmlGenerator from './HtmlGenerator.js';
-import MediaFile from './MediaFile.js';
+import FileInfo from './FileInfo.js';
 import API from './API.js';
 
 /**
@@ -51,17 +51,17 @@ export default class RatingPanel extends EventDispatchable {
 		this.elRatingClose = document.getElementById('rating_close');
 		/**
 		 * サブディレクトリ情報オブジェクト
-		 * @type {Subdirectory}
+		 * @type {SubdirectoryInfo}
 		 */
 		this.subdir = null;
 		/**
 		 * 1つ目のファイル
-		 * @type {MediaFile}
+		 * @type {FileInfo}
 		 */
 		this.file1 = null;
 		/**
 		 * 2つ目のファイル
-		 * @type {MediaFile}
+		 * @type {FileInfo}
 		 */
 		this.file2 = null;
 		/**
@@ -122,7 +122,7 @@ export default class RatingPanel extends EventDispatchable {
 
 	/**
 	 * サブディレクトリの情報を渡す
-	 * @param {Subdirectory} subdir - サブディレクトリ情報オブジェクト
+	 * @param {SubdirectoryInfo} subdir - サブディレクトリ情報オブジェクト
 	 */
 	setSubdir(subdir) {
 		this.subdir = subdir;
@@ -148,7 +148,7 @@ export default class RatingPanel extends EventDispatchable {
 	async next(winnerFileId, loserFileId) {
 		const HTML = HtmlGenerator;
 		this.container.classList.add('loading');
-		const [file1, file2] = (await API.rating(this.subdir, winnerFileId, loserFileId)).map(file => new MediaFile(file));
+		const [file1, file2] = (await API.rating(this.subdir, winnerFileId, loserFileId)).map(file => new FileInfo(file));
 		if (!file1 || !file2) {
 			this.close();
 			return;

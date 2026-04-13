@@ -75,7 +75,7 @@ export default class StatusBar extends EventDispatchable {
 
 	/**
 	 * 現在のサブディレクトリ名を設定する
-	 * @param {Subdirectory} subdir - サブディレクトリ情報オブジェクト
+	 * @param {SubdirectoryInfo} subdir - サブディレクトリ情報オブジェクト
 	 */
 	updateCurrentDirectory(subdir) {
 		const { subdirName, subdirNum } = subdir;
@@ -88,7 +88,7 @@ export default class StatusBar extends EventDispatchable {
 
 	/**
 	 * ファイル情報を表示する
-	 * @param {MediaFile|number} file - APIから返されたファイル情報オブジェクト、または、選択されたファイル数
+	 * @param {FileInfo|number} file - APIから返されたファイル情報オブジェクト、または、選択されたファイル数
 	 */
 	updateFileStatus(file) {
 		if (typeof file == 'number') {

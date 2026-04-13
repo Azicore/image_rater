@@ -112,7 +112,7 @@ export default class API {
 
 	/**
 	 * ファイル名を変更する
-	 * @param {Subdirectory} subdir - サブディレクトリ情報オブジェクト
+	 * @param {SubdirectoryInfo} subdir - サブディレクトリ情報オブジェクト
 	 * @param {string} fileId - ファイルID
 	 * @param {string} newName - 新しい名前
 	 * @return {boolean} 成功したかどうか
@@ -132,7 +132,7 @@ export default class API {
 
 	/**
 	 * ファイルを移動する
-	 * @param {Subdirectory} subdir - サブディレクトリ情報オブジェクト
+	 * @param {SubdirectoryInfo} subdir - サブディレクトリ情報オブジェクト
 	 * @param {string[]} fileIds - ファイルIDの配列
 	 * @param {string} newSubdirId - 移動先のサブディレクトリID
 	 * @return {string[]} fileIdsのうち移動に成功したファイルIDの配列
@@ -153,7 +153,7 @@ export default class API {
 
 	/**
 	 * レーティングを行ない次の候補を取得する
-	 * @param {Subdirectory} subdir - サブディレクトリ情報オブジェクト
+	 * @param {SubdirectoryInfo} subdir - サブディレクトリ情報オブジェクト
 	 * @param {string} winnerFileId - 勝利したファイルのファイルID
 	 * @param {string} loserFileId - 敗北したファイルのファイルID
 	 * @return {object[]} 次の候補ファイル

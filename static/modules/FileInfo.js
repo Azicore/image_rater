@@ -1,7 +1,7 @@
 /**
  * ファイルを表すクラス
  */
-export default class MediaFile {
+export default class FileInfo {
 
 	/**
 	 * コンストラクタ

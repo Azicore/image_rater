@@ -1,7 +1,7 @@
 import EventDispatchable from './EventDispatchable.js';
 import ExclusiveClassName from './ExclusiveClassName.js';
 import HtmlGenerator from './HtmlGenerator.js';
-import Subdirectory from './Subdirectory.js';
+import SubdirectoryInfo from './SubdirectoryInfo.js';
 import API from './API.js';
 
 /**
@@ -97,7 +97,7 @@ export default class DirectorySelector extends EventDispatchable {
 				const subdirName = li.dataset.subdirName;
 				const subdirNum = li.dataset.subdirNum;
 				const eventName = this.isMoveMode ? 'filemove' : 'select';
-				this.trigger(eventName, new Subdirectory({ dirId, subdirId, subdirName, subdirNum }));
+				this.trigger(eventName, new SubdirectoryInfo({ dirId, subdirId, subdirName, subdirNum }));
 				if (!this.isMoveMode) {
 					this.current = { dirId, subdirId };
 				}

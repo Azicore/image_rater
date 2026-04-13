@@ -2,7 +2,7 @@ import EventDispatchable from './EventDispatchable.js';
 import KeyEventManager from './KeyEventManager.js';
 import HtmlGenerator from './HtmlGenerator.js';
 import SelectedFiles from './SelectedFiles.js';
-import MediaFile from './MediaFile.js';
+import FileInfo from './FileInfo.js';
 import API from './API.js';
 
 /**
@@ -23,7 +23,7 @@ export default class FileSelector extends EventDispatchable {
 		this.container = document.getElementById('filelist');
 		/**
 		 * 表示中のファイル情報一覧
-		 * @type {MediaFile[]}
+		 * @type {FileInfo[]}
 		 */
 		this.files = [];
 		/**
@@ -33,7 +33,7 @@ export default class FileSelector extends EventDispatchable {
 		this.elems = [];
 		/**
 		 * 表示中のサブディレクトリ
-		 * @type {Subdirectory}
+		 * @type {SubdirectoryInfo}
 		 */
 		this.subdir = null;
 		/**
@@ -170,7 +170,7 @@ export default class FileSelector extends EventDispatchable {
 
 	/**
 	 * ファイル一覧を更新する
-	 * @param {Subdirectory} [subdir] - サブディレクトリ情報オブジェクト
+	 * @param {SubdirectoryInfo} [subdir] - サブディレクトリ情報オブジェクト
 	 */
 	async update(subdir) {
 		// ディレクトリが指定された場合は再取得
@@ -179,7 +179,7 @@ export default class FileSelector extends EventDispatchable {
 			this.subdir = subdir;
 			this.selectedFiles.clear(); // 選択を全解除
 			this.container.classList.add('loading');
-			this.files = (await API.getFileList(dirId, subdirId)).map(file => new MediaFile(file));
+			this.files = (await API.getFileList(dirId, subdirId)).map(file => new FileInfo(file));
 			this.container.innerHTML = '';
 			this.container.classList.remove('loading');
 		}
@@ -217,7 +217,7 @@ export default class FileSelector extends EventDispatchable {
 
 	/**
 	 * ファイルを表す要素を作成する
-	 * @param {MediaFile} file - APIから返されたファイル情報オブジェクト
+	 * @param {FileInfo} file - APIから返されたファイル情報オブジェクト
 	 * @return {HTMLElement} 作成した要素
 	 */
 	_createItemElement(file) {
@@ -232,8 +232,8 @@ export default class FileSelector extends EventDispatchable {
 
 	/**
 	 * 選択中のファイルを移動する
-	 * @param {Subdirectory} newSubdir - 移動先のサブディレクトリ
-	 * @return {Subdirectory} 現在のサブディレクトリ
+	 * @param {SubdirectoryInfo} newSubdir - 移動先のサブディレクトリ
+	 * @return {SubdirectoryInfo} 現在のサブディレクトリ
 	 */
 	async moveFile(newSubdir) {
 		const fileIds = Array.from(this.selectedFiles, (elem) => this.files[elem.dataset.itemN].id);
