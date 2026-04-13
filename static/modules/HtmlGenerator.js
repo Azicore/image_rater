@@ -96,4 +96,28 @@ export default class HtmlGenerator {
 		return this.generate('input').attr('type', 'text');
 	}
 
+	/**
+	 * trタグを生成するオブジェクトを返す
+	 * @return {object} generate()を参照
+	 */
+	static get tr() {
+		return this.generate('tr');
+	}
+
+	/**
+	 * thタグを生成するオブジェクトを返す
+	 * @return {object} generate()を参照
+	 */
+	static get th() {
+		return this.generate('th');
+	}
+
+	/**
+	 * tdタグを生成するオブジェクトを返す
+	 * @return {object} generate()を参照
+	 */
+	static get td() {
+		return this.generate('td');
+	}
+
 }

@@ -137,6 +137,14 @@ body {
 	position: fixed;
 	position-area: bottom span-left;
 }
+#rating_button {
+	margin: 4px 8px;
+	padding: 0px 12px;
+	border-radius: 12px / 50%;
+	background: #00bb88;
+	line-height: calc(var(--status-height) - 8px);
+	cursor: pointer;
+}
 
 #rename {
 	border: 1px solid #999999;
@@ -202,6 +210,97 @@ body {
 #viewer img {
 	max-width: 100vw;
 	max-height: 100vh;
+}
+
+#rating {
+	width: 100vw;
+	height: 100vh;
+	background: #111111;
+	display: flex;
+	flex-flow: column nowrap;
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	--loading-margin-top: 160px;
+}
+#rating_property_block {
+	position: relative;
+}
+#rating_property {
+	margin: 4px auto;
+	border-collapse: collapse;
+	font-size: 13px;
+}
+#rating_property th, #rating_property td {
+	padding: 0px 16px;
+	border: 2px solid #111111;
+	line-height: 20px;
+	text-align: center;
+}
+#rating_property td.rating_property_1 {
+	text-align: right;
+}
+#rating_property td.rating_property_2 {
+	text-align: left;
+}
+.rating_property_winner {
+	background: #00bb88;
+}
+#rating_skip {
+	position: absolute;
+	right: 48px;
+	top: 8px;
+	text-align: center;
+	font-size: 11px;
+	color: #aaaaaa;
+	cursor: pointer;
+}
+#rating_skip::before {
+	content: '';
+	width: 24px;
+	height: 24px;
+	margin: 0px auto;
+	background: #444444;
+	clip-path: shape(from 0% 15%, line to 50% 50%, line to 50% 15%, line to 100% 50%, line to 50% 85%, line to 50% 50%, line to 0% 85%, close);
+	display: block;
+}
+#rating_close {
+	position: absolute;
+	right: 12px;
+	top: 8px;
+	text-align: center;
+	font-size: 11px;
+	color: #aaaaaa;
+	cursor: pointer;
+}
+#rating_close::before {
+	content: '';
+	width: 24px;
+	height: 24px;
+	margin: 0px auto;
+	background: #444444;
+	clip-path: shape(from 10% 0%, line to 50% 40%, line to 90% 0%, line to 100% 10%, line to 60% 50%, line to 100% 90%, line to 90% 100%, line to 50% 60%, line to 10% 100%, line to 0% 90%, line to 40% 50%, line to 0% 10%, close);
+	display: block;
+}
+#rating_image_block {
+	min-height: 0px;
+	display: flex;
+	flex-grow: 1;
+}
+#rating_image_block div {
+	width: 50%;
+	border: 2px solid transparent;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+}
+#rating_image_block div:hover {
+	border: 2px solid #00ffff;
+}
+#rating_image_block img {
+	max-width: 100%;
+	max-height: 100%;
 }
 
 #dirlist {

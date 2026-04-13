@@ -5,10 +5,12 @@
 <title>Image Rater</title>
 <script type="module">
 import LocalConfig from './modules/LocalConfig.js';
+import KeyEventManager from './modules/KeyEventManager.js';
 import StatusBar from './modules/StatusBar.js';
 import DirectorySelector from './modules/DirectorySelector.js';
 import FileSelector from './modules/FileSelector.js';
 import MediaViewer from './modules/MediaViewer.js';
+import RatingPanel from './modules/Ratingpanel.js';
 import MainMenu from './modules/MainMenu.js';
 import SortMenu from './modules/SortMenu.js';
 
@@ -17,6 +19,7 @@ const status = new StatusBar();
 const directoryList = new DirectorySelector();
 const fileList = new FileSelector(config);
 const viewer = new MediaViewer();
+const rating = new RatingPanel();
 const mainMenu = new MainMenu(config);
 const sortMenu = new SortMenu(config);
 
@@ -31,11 +34,11 @@ fileList.on('select', (file) => {
 fileList.on('fileopen', (subdir, fileName) => {
 	// ビューアを起動する
 	viewer.open(subdir, fileName);
-	fileList.disabled = true;
+	KeyEventManager.setActiveHandler('viewer');
 });
 // ビューアが閉じられたとき
 viewer.on('close', () => {
-	fileList.disabled = false;
+	KeyEventManager.setActiveHandler('default');
 });
 // ステータスバーからディレクトリ選択メニューが開かれたとき
 status.on('directorymenuopen', () => {
@@ -47,6 +50,7 @@ status.on('directorymenuopen', () => {
 directoryList.on('select', async (subdir) => {
 	// ステータスバーを更新してファイル一覧を作成する
 	status.updateCurrentDirectory(subdir);
+	rating.setSubdir(subdir);
 	await fileList.update(subdir);
 	subdir.subdirNum = fileList.length;
 	status.updateCurrentDirectory(subdir);
@@ -76,6 +80,15 @@ mainMenu.on('filemove', () => {
 	directoryList.show(true);
 	status.hide();
 });
+// レーティングを開始したとき
+rating.on('open', () => {
+	KeyEventManager.setActiveHandler('rating');
+});
+// レーティングを終了したとき
+rating.on('close', (subdir) => {
+	KeyEventManager.setActiveHandler('default');
+	fileList.update(subdir);
+});
 
 </script>
 <link rel="stylesheet" href="style.css">
@@ -89,7 +102,7 @@ mainMenu.on('filemove', () => {
 	<div id="status_menu">
 		<div id="sort" class="status_menu_label">ソート</div>
 		<div id="menu" class="status_menu_label">メニュー</div>
-		<!--div id="rating">レーティング</div-->
+		<div id="rating_button">レーティング</div>
 	</div>
 </div>
 <div id="sort_menu" class="menu_body" popover></div>
@@ -106,5 +119,16 @@ mainMenu.on('filemove', () => {
 	</div>
 </div>
 <div id="viewer"></div>
+<div id="rating">
+	<div id="rating_property_block">
+		<table id="rating_property"></table>
+		<div id="rating_skip" title="スキップ"></div>
+		<div id="rating_close" title="終了"></div>
+	</div>
+	<div id="rating_image_block">
+		<div id="rating_image_1"></div>
+		<div id="rating_image_2"></div>
+	</div>
+</div>
 </body>
 </html>

@@ -87,40 +87,8 @@ export default class StatusBar extends EventDispatchable {
 	}
 
 	/**
-	 * ファイルサイズをフォーマットする
-	 * @param {number} size - ファイルサイズ（バイト）
-	 * @return {string} フォーマットしたサイズ
-	 */
-	_formatFileSize(size) {
-		const units = ['B', 'KB', 'MB', 'GB'];
-		let k = 0;
-		while (size >= 1000) {
-			size /= 1024;
-			k++;
-		}
-		return `${size.toFixed(1)}${units[k]}`;
-	}
-
-	/**
-	 * 日時をフォーマットする
-	 * @param {number} time - Unix時刻（秒単位）
-	 * @return {string} フォーマットするした日時
-	 */
-	_formatDate(time) {
-		const d = new Date();
-		d.setTime((time - d.getTimezoneOffset() * 60) * 1e3);
-		return d.toISOString().replace(/T/, ' ').replace(/\..+/, '');
-	}
-
-	/**
 	 * ファイル情報を表示する
-	 * @param {object|number} file - APIから返されたファイル情報オブジェクト、または、選択されたファイル数
-	 * @param {string} file.id - ファイルID
-	 * @param {string} file.n - ファイル名
-	 * @param {number} file.w - メディアの幅
-	 * @param {number} file.h - メディアの高さ
-	 * @param {number} file.s - ファイルサイズ（バイト）
-	 * @param {number} file.m - 最終更新日時（Unix時刻・秒単位）
+	 * @param {MediaFile|number} file - APIから返されたファイル情報オブジェクト、または、選択されたファイル数
 	 */
 	updateFileStatus(file) {
 		if (typeof file == 'number') {
@@ -129,7 +97,7 @@ export default class StatusBar extends EventDispatchable {
 		} else {
 			this.elFileName.style.display = 'block';
 			this.elFileName.innerText = file.n;
-			this.elFileProps.innerText = `${file.w}×${file.h} / ${this._formatFileSize(file.s)} / ${this._formatDate(file.m)}`;
+			this.elFileProps.innerText = `${file.rating} / ${file.mediaSize} / ${file.fileSize} / ${file.date}`;
 		}
 		this.rename.close();
 		this.rename.fileId = file.id;

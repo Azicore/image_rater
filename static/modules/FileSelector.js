@@ -1,6 +1,8 @@
 import EventDispatchable from './EventDispatchable.js';
+import KeyEventManager from './KeyEventManager.js';
 import HtmlGenerator from './HtmlGenerator.js';
 import SelectedFiles from './SelectedFiles.js';
+import MediaFile from './MediaFile.js';
 import API from './API.js';
 
 /**
@@ -21,7 +23,7 @@ export default class FileSelector extends EventDispatchable {
 		this.container = document.getElementById('filelist');
 		/**
 		 * 表示中のファイル情報一覧
-		 * @type {object[]}
+		 * @type {MediaFile[]}
 		 */
 		this.files = [];
 		/**
@@ -55,11 +57,6 @@ export default class FileSelector extends EventDispatchable {
 		 * @type {number}
 		 */
 		this.lastClickedTime = 0;
-		/**
-		 * 機能を無効にするかどうか（ビューア表示中にtureにする）
-		 * @type {boolean}
-		 */
-		this.disabled = false;
 
 		this._defineEvents('select', 'fileopen', 'next');
 		this._setEventHandlers();
@@ -107,35 +104,36 @@ export default class FileSelector extends EventDispatchable {
 			}
 		});
 		// キーボード操作
-		window.addEventListener('keydown', (e) => {
+		KeyEventManager.addHandler('default', (e) => {
 			// 前のファイル（←）
 			if (e.code == 'ArrowLeft') {
 				this.selectedFiles.prev(this.elems);
-				// ビューア表示中はファイルを開く
-				if (this.disabled) this.openFile(this.selectedFiles[0]);
 			// 次のファイル（→）
 			} else if (e.code == 'ArrowRight') {
 				this.selectedFiles.next(this.elems);
-				// ビューア表示中はファイルを開く
-				if (this.disabled) this.openFile(this.selectedFiles[0]);
 			// 真上のファイル（↑）
 			} else if (e.code == 'ArrowUp') {
-				// ビューア表示中は無効
-				if (this.disabled) return;
 				this.selectedFiles.prevRow(this.elems) && e.preventDefault();
 			// 真下のファイル（↓）
 			} else if (e.code == 'ArrowDown') {
-				// ビューア表示中は無効
-				if (this.disabled) return;
 				this.selectedFiles.nextRow(this.elems) && e.preventDefault();
 			// ファイルを開く
 			} else if (e.code == 'Enter') {
-				// ビューア表示中は無効
-				if (this.disabled) return;
 				if (this.selectedFiles.length == 1) this.openFile(this.selectedFiles[0]);
 			}
 		});
-	
+		// キーボード操作（ビューア表示時）
+		KeyEventManager.addHandler('viewer', (e) => {
+			// 前のファイル（←）
+			if (e.code == 'ArrowLeft') {
+				this.selectedFiles.prev(this.elems);
+				this.openFile(this.selectedFiles[0]);
+			// 次のファイル（→）
+			} else if (e.code == 'ArrowRight') {
+				this.selectedFiles.next(this.elems);
+				this.openFile(this.selectedFiles[0]);
+			}
+		});
 	}
 
 	/**
@@ -146,6 +144,11 @@ export default class FileSelector extends EventDispatchable {
 		return this.files.length;
 	}
 
+	/**
+	 * ソート関数を設定する
+	 * @param {string} sortKey - ソートキー
+	 * @param {boolean} sortReversed - 逆順かどうか
+	 */
 	setSortFunc(sortKey, sortReversed) {
 		if (this.sortDefs[sortKey] == null) return;
 		const rev = sortReversed ? -1 : 1;
@@ -176,8 +179,7 @@ export default class FileSelector extends EventDispatchable {
 			this.subdir = subdir;
 			this.selectedFiles.clear(); // 選択を全解除
 			this.container.classList.add('loading');
-			this.files = await API.getFileList(dirId, subdirId);
-			this.files.forEach(file => { file.d = file.w * file.h }); // 画素数を計算しておく
+			this.files = (await API.getFileList(dirId, subdirId)).map(file => new MediaFile(file));
 			this.container.innerHTML = '';
 			this.container.classList.remove('loading');
 		}
@@ -215,11 +217,7 @@ export default class FileSelector extends EventDispatchable {
 
 	/**
 	 * ファイルを表す要素を作成する
-	 * @param {object} file - APIから返されたファイル情報オブジェクト
-	 * @param {string} file.id - ファイルID
-	 * @param {string} file.n - ファイル名
-	 * @param {number} file.tw - サムネイルの幅
-	 * @param {number} file.th - サムネイルの高さ
+	 * @param {MediaFile} file - APIから返されたファイル情報オブジェクト
 	 * @return {HTMLElement} 作成した要素
 	 */
 	_createItemElement(file) {

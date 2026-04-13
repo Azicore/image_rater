@@ -101,6 +101,18 @@ app.post('/move', (req, res, next) => {
 	}
 });
 
+// レーティングを行なう
+app.post('/rating', (req, res, next) => {
+	const { dirId, subdirId, winnerFileId, loserFileId } = req.body;
+	const { path: dirPath } = config.data.directories[dirId] || {};
+	const dirInfo = new DirectoryInfo(dirPath);
+	try {
+		res.json(dirInfo.rating(subdirId, winnerFileId, loserFileId));
+	} catch (e) {
+		res.json({ error: true, message: e.message });
+	}
+});
+
 // index.htmlを返す
 app.use('/', (req, res, next) => {
 //	if (req.path == '/') {

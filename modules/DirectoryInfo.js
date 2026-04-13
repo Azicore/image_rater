@@ -3,6 +3,7 @@ import fs from 'fs';
 import UniqueId from './UniqueId.js';
 import MediaFile from './MediaFile.js';
 import DataFileLoader from './DataFileLoader.js';
+import RatingManager from './RatingManager.js';
 
 /**
  * 親ディレクトリごとのデータファイルを操作するためのクラス
@@ -130,7 +131,9 @@ export default class DirectoryInfo extends DataFileLoader {
 			subdir.files[fileId] = {
 				n: item,
 				s: stats.size,
-				m: Math.floor(stats.mtimeMs / 1000)
+				m: Math.floor(stats.mtimeMs / 1000),
+				r: RatingManager.INITIAL_RATING,
+				g: RatingManager.INITIAL_WEIGHT
 			};
 			files[fileId] = subdir.files[fileId];
 		}
@@ -256,6 +259,25 @@ export default class DirectoryInfo extends DataFileLoader {
 		} catch (e) {
 			throw new Error('ディレクトリ操作中に不明なエラーが発生しました。');
 		}
+	}
+
+	/**
+	 * レーティングを行なう
+	 * @param {string} subdirId - サブディレクトリID
+	 * @param {string} winnerFileId - 勝利したファイルのファイルID
+	 * @param {string} loserFileId - 敗北したファイルのファイルID
+	 * @return {object} 成功時はオブジェクトを返す
+	 */
+	rating(subdirId, winnerFileId, loserFileId) {
+		const subdir = this.data[subdirId];
+		if (!subdir) throw new Error('不明なディレクトリが指定されています。');
+		if (!subdir.files) throw new Error('ファイルの情報がありません。');
+		const rating = new RatingManager(subdir.files);
+		if (winnerFileId && loserFileId) {
+			rating.update(winnerFileId, loserFileId);
+			this._save();
+		}
+		return { ok: true, next: rating.getNext() };
 	}
 
 }

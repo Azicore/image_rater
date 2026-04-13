@@ -151,4 +151,25 @@ export default class API {
 		return movedFileIds;
 	}
 
+	/**
+	 * レーティングを行ない次の候補を取得する
+	 * @param {Subdirectory} subdir - サブディレクトリ情報オブジェクト
+	 * @param {string} winnerFileId - 勝利したファイルのファイルID
+	 * @param {string} loserFileId - 敗北したファイルのファイルID
+	 * @return {object[]} 次の候補ファイル
+	 */
+	static async rating(subdir, winnerFileId, loserFileId) {
+		this.toggleLoading(true);
+		const result = await this._post('/rating', {
+			dirId: subdir.dirId,
+			subdirId: subdir.subdirId,
+			winnerFileId: winnerFileId,
+			loserFileId: loserFileId
+		});
+		const next = result.next || [];
+		if (result.error) this.notifyError(result.message);
+		this.toggleLoading(false);
+		return next;
+	}
+
 }

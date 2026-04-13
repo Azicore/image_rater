@@ -1,4 +1,5 @@
 import EventDispatchable from './EventDispatchable.js';
+import KeyEventManager from './KeyEventManager.js';
 import HtmlGenerator from './HtmlGenerator.js';
 import API from './API.js';
 
@@ -17,10 +18,6 @@ export default class MediaViewer extends EventDispatchable {
 		 * @type {HTMLElement}
 		 */
 		this.container = document.getElementById('viewer');
-		/**
-		 * 機能を無効にするかどうか（ビューア表示中はfalseにする）
-		 */
-		this.disabled = true;
 
 		this._defineEvents('close');
 		this._setEventHandlers();
@@ -42,9 +39,7 @@ export default class MediaViewer extends EventDispatchable {
 			}
 		});
 		// キーボード操作
-		window.addEventListener('keydown', (e) => {
-			// 非表示時は無効
-			if (this.disabled) return;
+		KeyEventManager.addHandler('viewer', (e) => {
 			// ビューアを閉じる
 			if (e.code == 'Backspace' || e.code == 'Escape') {
 				this.close();
@@ -60,7 +55,6 @@ export default class MediaViewer extends EventDispatchable {
 	async open(subdir, fileName) {
 		const HTML = HtmlGenerator;
 		const { dirId, subdirName } = subdir;
-		this.disabled = false;
 		this.container.innerHTML = '';
 		this.container.appendChild(
 			HTML.img.attr('src', API.getFileURL(dirId, subdirName, fileName)).attr('alt', fileName).attr('title', fileName).end()
@@ -75,8 +69,6 @@ export default class MediaViewer extends EventDispatchable {
 	 * ビューアを閉じる
 	 */
 	async close() {
-		if (this.disabled) return;
-		this.disabled = true;
 		this.container.style.display = 'none';
 		this.trigger('close');
 		try {
