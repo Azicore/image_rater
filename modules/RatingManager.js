@@ -92,4 +92,47 @@ export default class RatingManager {
 		return file1.r >= file2.r ? [file1, file2] : [file2, file1];
 	}
 
+	/**
+	 * レーティングと重みをリセットする
+	 * @param {string[]} fileIds - ファイルID
+	 * @param {boolean} weightOnly - 重みだけリセットするかどうか
+	 */
+	reset(fileIds, weightOnly) {
+		for (const fileId in this.files) {
+			if (fileIds.includes(fileId)) {
+				if (!weightOnly) this.files[fileId].r = this.constructor.INITIAL_RATING;
+				this.files[fileId].g = this.constructor.INITIAL_WEIGHT;
+			}
+		}
+	}
+
+	/**
+	 * レーティングと重みを交換する
+	 * @param {string} fileId1 - 1つ目のファイルID
+	 * @param {string} fileId2 - 2つ目のファイルID
+	 */
+	exchange(fileId1, fileId2) {
+		const file1 = this.files[fileId1];
+		const file2 = this.files[fileId2];
+		if (!file1 || !file2) throw new Error('不明なファイルが指定されています。');
+		[file1.r, file1.g, file2.r, file2.g] = [file2.r, file2.g, file1.r, file1.g];
+	}
+
+	/**
+	 * レーティングの平均値を調整する
+	 */
+	adjust() {
+		let total = 0;
+		let num = 0;
+		for (const fileId in this.files) {
+			total += this.files[fileId].r;
+			num++;
+		}
+		const avg = total / num;
+		const diff = this.constructor.INITIAL_RATING - avg;
+		for (const fileId in this.files) {
+			this.files[fileId].r += diff;
+		}
+	}
+
 }

@@ -280,4 +280,27 @@ export default class DirectoryInfo extends DataFileLoader {
 		return { ok: true, next: rating.getNext() };
 	}
 
+	/**
+	 * レーティングに関する操作を行なう
+	 * @param {string} subdirId - サブディレクトリID
+	 * @param {string} mode - 操作の種類（reset、exchange、adjustのいずれか）
+	 * @param {object} [params] - 操作ごとのパラメータ
+	 * @return {object} 成功時はオブジェクトを返す
+	 */
+	ratingOperation(subdirId, mode, params) {
+		const subdir = this.data[subdirId];
+		if (!subdir) throw new Error('不明なディレクトリが指定されています。');
+		if (!subdir.files) throw new Error('ファイルの情報がありません。');
+		const rating = new RatingManager(subdir.files);
+		if (mode == 'reset') {
+			rating.reset(params.fileIds, params.weightOnly);
+		} else if (mode == 'exchange') {
+			rating.exchange(params.fileIds[0], params.fileIds[1]);
+		} else if (mode == 'adjust') {
+			rating.adjust();
+		}
+		this._save();
+		return { ok: true };
+	}
+
 }

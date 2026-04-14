@@ -172,4 +172,24 @@ export default class API {
 		return next;
 	}
 
+	/**
+	 * レーティングに関する操作を実行する
+	 * @param {SubdirectoryInfo} subdir - サブディレクトリ情報オブジェクト
+	 * @param {string} mode - 操作の種類（reset、exchange、adjustのいずれか）
+	 * @param {object} params - 操作ごとのパラメータ
+	 * @return {boolean} 成功したかどうか
+	 */
+	static async ratingOperation(subdir, mode, params) {
+		this.toggleLoading(true);
+		const result = await this._post('/ratingope', {
+			dirId: subdir.dirId,
+			subdirId: subdir.subdirId,
+			mode: mode,
+			params: params
+		});
+		if (result.error) this.notifyError(result.message);
+		this.toggleLoading(false);
+		return !result.error;
+	}
+
 }

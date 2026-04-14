@@ -32,7 +32,7 @@ export default class MainMenu extends Menu {
 		 */
 		this.ratingSymbol = config.ratingSymbol;
 
-		this._defineEvents('filemove');
+		this._defineEvents('filemove', 'ratingope');
 		this._initializeMenu();
 		this.addMenuItem('ファイルを移動…', (item) => {
 			this.trigger('filemove');
@@ -40,6 +40,19 @@ export default class MainMenu extends Menu {
 		this.addMenuItem('ディレクトリ名を変更…', (item) => {
 
 		});
+		this.addPartitionLine();
+		this.addMenuItem('レーティングと選択重みを交換', (item) => {
+			this.trigger('ratingope', 'exchange');
+		}, false, true).itemId = 'exchange';
+		this.addMenuItem('レーティングと選択重みをリセット', (item) => {
+			this.trigger('ratingope', 'resetall');
+		}, false, true).itemId = 'resetall';
+		this.addMenuItem('選択重みをリセット', (item) => {
+			this.trigger('ratingope', 'reset');
+		}, false, true).itemId = 'reset';
+		this.addMenuItem('レーティング平均値を調整', (item) => {
+			this.trigger('ratingope', 'adjust');
+		}, false, true).itemId = 'adjust';
 		this.addPartitionLine();
 		this.addMenuItem('レーティングシンボルを表示', (item) => {
 			item.checked = !item.checked;

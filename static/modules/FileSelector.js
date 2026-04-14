@@ -260,4 +260,22 @@ export default class FileSelector extends EventDispatchable {
 		return this.subdir;
 	}
 
+	/**
+	 * レーティングに関する操作を実行する
+	 * @param {string} mode - 操作の種類（reset、resetall、exchange、adjustのいずれか）
+	 * @return {SubdirectoryInfo} 現在のサブディレクトリ
+	 */
+	async ratingOperation(mode) {
+		const params = {};
+		if (mode == 'reset' || mode == 'resetall') {
+			params.weightOnly = mode == 'reset';
+			mode = 'reset';
+		}
+		if (mode == 'reset' || mode == 'exchange') {
+			params.fileIds = Array.from(this.selectedFiles, (elem) => this.files[elem.dataset.itemN].id);
+		}
+		await API.ratingOperation(this.subdir, mode, params);
+		return this.subdir;
+	}
+
 }
