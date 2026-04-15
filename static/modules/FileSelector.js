@@ -57,6 +57,11 @@ export default class FileSelector extends EventDispatchable {
 		 * @type {number}
 		 */
 		this.lastClickedTime = 0;
+		/**
+		 * レーティングシンボル計算オブジェクト
+		 * @type {object}
+		 */
+		this.ratingSymbol = null;
 
 		this._defineEvents('select', 'fileopen', 'next');
 		this._setEventHandlers();
@@ -73,6 +78,8 @@ export default class FileSelector extends EventDispatchable {
 		// 更新系API通信時のローディング表示とエラー表示
 		API.toggleLoading = (toggle) => this.container.classList.toggle('loading', toggle);
 		API.notifyError = (msg) => alert(msg);
+		// レーティングシンボルの表示
+		this.toggleRatingSymbol(config.ratingSymbol);
 	}
 
 	/**
@@ -182,6 +189,7 @@ export default class FileSelector extends EventDispatchable {
 			this.files = (await API.getFileList(dirId, subdirId)).map(file => new FileInfo(file));
 			this.container.innerHTML = '';
 			this.container.classList.remove('loading');
+			this.ratingSymbol = this.getRatingSymbolDefiner();
 		}
 		if (this.files.length == 0) {
 			// ●ファイルがありません
@@ -190,7 +198,13 @@ export default class FileSelector extends EventDispatchable {
 			this.files.sort(this.sortFunc);
 			for (let i = 0; this.files.length > i; i++) {
 				const file = this.files[i];
-				if (!file.elem) file.elem = this._createItemElement(file); // 初回は要素を作成
+				if (!file.elem) {
+					// 初回は要素を作成
+					file.elem = this._createItemElement(file);
+					// レーティングシンボル
+					const ratingClass = this.ratingSymbol.get(file.r);
+					file.elem.classList.add(`filelist_rating_${ratingClass}`);
+				}
 				file.elem.dataset.itemN = i;
 				this.container.appendChild(file.elem);
 			}
@@ -276,6 +290,31 @@ export default class FileSelector extends EventDispatchable {
 		}
 		await API.ratingOperation(this.subdir, mode, params);
 		return this.subdir;
+	}
+
+	/**
+	 * レーティングシンボル計算オブジェクトを作成する
+	 * @return {object} レーティングを計算するget()関数を持ったオブジェクト
+	 */
+	getRatingSymbolDefiner() {
+		const ratingMax = this.files.reduce((file1, file2) => file1.r > file2.r ? file1 : file2).r;
+		const ratingMin = this.files.reduce((file1, file2) => file1.r > file2.r ? file2 : file1).r;
+		const ratingRange = ratingMax - ratingMin;
+		return {
+			get: (rating) => {
+				if (ratingRange == 0) return 2; // レーティングが全て同じ場合は2にする
+				if (rating == ratingMax) return 4; // 最大値が4を超えないようにする
+				return Math.floor((rating - ratingMin) / ratingRange * 5);
+			}
+		};
+	}
+
+	/**
+	 * レーティングシンボルの表示を切り替える
+	 * @param {boolean} toggle - 表示するかどうか
+	 */
+	toggleRatingSymbol(toggle) {
+		this.container.classList.toggle('filelist_rating', toggle);
 	}
 
 }

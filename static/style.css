@@ -188,12 +188,39 @@ body {
 #filelist li {
 	margin: 4px;
 	border: 2px solid transparent;
+	position: relative;
 }
 #filelist li.filelist_selected {
 	border: 2px solid #00ffff;
 }
 #filelist img {
 	vertical-align: middle;
+}
+#filelist.filelist_rating li::before {
+	content: '';
+	width: 10px;
+	height: 10px;
+	border: 1px solid #333333;
+	border-radius: 50%;
+	display: block;
+	position: absolute;
+	right: 4px;
+	top: 4px;
+}
+#filelist.filelist_rating li.filelist_rating_0::before {
+	background: #990000;
+}
+#filelist.filelist_rating li.filelist_rating_1::before {
+	background: #ff9900;
+}
+#filelist.filelist_rating li.filelist_rating_2::before {
+	background: #ffff00;
+}
+#filelist.filelist_rating li.filelist_rating_3::before {
+	background: #00ff00;
+}
+#filelist.filelist_rating li.filelist_rating_4::before {
+	background: #00ccff;
 }
 
 #viewer {

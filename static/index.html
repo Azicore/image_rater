@@ -90,6 +90,10 @@ mainMenu.on('ratingope', async (mode) => {
 	const subdir = await fileList.ratingOperation(mode);
 	fileList.update(subdir);
 });
+// メニューからレーティングシンボルの表示を切り替えたとき
+mainMenu.on('symbol', (toggle) => {
+	fileList.toggleRatingSymbol(toggle);
+});
 // レーティングを開始したとき
 rating.on('open', () => {
 	KeyEventManager.setActiveHandler('rating');

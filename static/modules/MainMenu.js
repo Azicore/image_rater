@@ -32,7 +32,7 @@ export default class MainMenu extends Menu {
 		 */
 		this.ratingSymbol = config.ratingSymbol;
 
-		this._defineEvents('filemove', 'ratingope');
+		this._defineEvents('filemove', 'ratingope', 'symbol');
 		this._initializeMenu();
 		this.addMenuItem('ファイルを移動…', (item) => {
 			this.trigger('filemove');
@@ -56,6 +56,9 @@ export default class MainMenu extends Menu {
 		this.addPartitionLine();
 		this.addMenuItem('レーティングシンボルを表示', (item) => {
 			item.checked = !item.checked;
+			this.ratingSymbol = item.checked;
+			this.config.update({ ratingSymbol: this.ratingSymbol }); // 設定の保存
+			this.trigger('symbol', this.ratingSymbol);
 		}, this.ratingSymbol);
 	}
 
