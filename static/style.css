@@ -1,23 +1,46 @@
+/*************************************************************
+ * 全体
+ *************************************************************/
 * {
 	margin: 0px;
 	padding: 0px;
 }
-body {
-	background: #111111;
-	color: #f0f0f0;
-	font-size: 14px;
-}
 :root {
+	--base-background: #111111;
+	--base-textcolor: #f0f0f0;
+	--base-accent-color: #2882bd;
+	/*--base-accent-color: #bd286b;*/
+	--base-accent-color-hover: oklch(from var(--base-accent-color) calc(l + 0.05) c h);
+	--base-disabled-color: #666666;
+	--base-selected-color: oklch(from var(--base-accent-color) calc(l + 0.1) c calc(h - 60));
+	/*--base-selected-color: oklch(from var(--base-accent-color) calc(l + 0.1) c calc(h + 80));*/
 	--status-height: 32px;
+	--status-background: rgb(from #2a2a2a r g b / 0.8);
+	--status-background-hover: oklch(from #2a2a2a calc(l + 0.17) c h / 0.5);
+	--menu-background: rgb(from #444444 r g b / 0.9);
+	--menu-background-hover: oklch(from #444444 calc(l + 0.2) c h / 0.5);
+	--menu-textcolor: #fafafa;
+	--menu-textcolor-disabled: #999999;
+	--menu-linecolor: #666666;
+	--filelist-cursor-color: #00ffff;
 	--loading-width: 100vw;
+	--loading-size: 50px;
 	--loading-margin-top: 0px;
-	--loading-scale: 50%;
 	--loading-color: #cccccc;
 }
+body {
+	background: var(--base-background);
+	color: var(--base-textcolor);
+	font-size: 14px;
+}
+
+/*************************************************************
+ * ステータスバー
+ *************************************************************/
 #status {
 	width: 100%;
 	height: var(--status-height);
-	background: rgba(from #333333 r g b / 0.8);
+	background: var(--status-background);
 	position: fixed;
 	display: flex;
 	align-items: center;
@@ -31,22 +54,25 @@ body {
 }
 #status_current_dir {
 	padding: 0px 8px;
-	border-right: 1px solid #666666;
+	border-right: 1px solid var(--menu-linecolor);
 	line-height: var(--status-height);
 	white-space: nowrap;
 	cursor: pointer;
 }
 #status_current_dir:hover, #status_file_name:hover {
-	background: rgba(from #444444 r g b / 0.8);
+	background: var(--status-background-hover);
 }
+/* ハンバーガーアイコン */
 #status_current_dir::before {
 	content: '';
 	width: 16px;
 	height: 12px;
 	margin-right: 8px;
-	background: linear-gradient(0deg, #ffffff 0%, #ffffff 20%,
-		transparent 20%, transparent 40%, #ffffff 40%, #ffffff 60%,
-		transparent 60%, transparent 80%, #ffffff 80%, #ffffff 100%);
+	background: var(--base-textcolor);
+	clip-path: shape(
+		from 0% 0%, line to 100% 0%, line to 100% 20%, line to 0% 20%, close,
+		move to 0% 40%, line to 100% 40%, line to 100% 60%, line to 0% 60%, close,
+		move to 0% 80%, line to 100% 80%, line to 100% 100%, line to 0% 100%, close);
 	vertical-align: middle;
 	display: inline-block;
 }
@@ -56,7 +82,7 @@ body {
 }
 #status_file_name {
 	padding: 0px 8px;
-	border-right: 1px solid #666666;
+	border-right: 1px solid var(--menu-linecolor);
 	line-height: var(--status-height);
 	white-space: nowrap;
 	cursor: pointer;
@@ -79,24 +105,27 @@ body {
 	cursor: pointer;
 }
 .status_menu_label:hover, .status_menu_label.menu_label_open {
-	background: rgba(from #444444 r g b / 0.8);
+	background: var(--status-background-hover);
 }
+/* メニューの三角マーク */
 .status_menu_label::before {
 	content: '';
 	width: 10px;
 	height: 6px;
 	margin-right: 6px;
-	background: #ffffff;
+	background: var(--base-textcolor);
 	clip-path: shape(from 0% 0%, line to 100% 0%, line to 50% 100%, close);
 	vertical-align: middle;
 	display: inline-block;
-
 }
 
+/*************************************************************
+ * メニュー共通
+ *************************************************************/
 .menu_body {
 	padding: 4px;
-	background: rgba(from #444444 r g b / 0.9);
-	color: #ffffff;
+	background: var(--menu-background);
+	color: var(--menu-textcolor);
 	font-size: 14px;
 }
 .menu_body div {
@@ -107,13 +136,14 @@ body {
 	cursor: pointer;
 }
 .menu_body div:hover {
-	background: oklch(from #444444 calc(l + 0.2) c h / 0.5);
+	background: var(--menu-background-hover);
 }
+/* チェックマーク */
 .menu_body div.menu_item_checked::before {
 	content: '';
 	width: 12px;
 	height: 12px;
-	background: #ffffff;
+	background: var(--menu-textcolor);
 	clip-path: shape(from 10% 40%, line to 40% 70%, line to 90% 10%, line to 100% 20%, line to 40% 90%, line to 0% 50%, close);
 	display: inline-block;
 	position: absolute;
@@ -121,7 +151,7 @@ body {
 	top: 8px;
 }
 .menu_body div.menu_item_disabled {
-	color: #999999;
+	color: var(--menu-textcolor-disabled);
 	cursor: default;
 }
 .menu_body div.menu_item_disabled:hover {
@@ -130,26 +160,36 @@ body {
 .menu_body div.menu_partition {
 	height: 4px;
 	margin-top: 4px;
-	border-top: 1px solid #666666;
+	border-top: 1px solid var(--menu-linecolor);
 }
 #main_menu, #sort_menu {
 	border: 0px;
 	position: fixed;
 	position-area: bottom span-left;
 }
+
+/*************************************************************
+ * レーティングボタン
+ *************************************************************/
 #rating_button {
 	margin: 4px 8px;
 	padding: 0px 12px;
 	border-radius: 12px / 50%;
-	background: #00bb88;
+	background: var(--base-accent-color);
 	line-height: calc(var(--status-height) - 8px);
 	cursor: pointer;
 }
+#rating_button:hover {
+	background: var(--base-accent-color-hover);
+}
 
+/*************************************************************
+ * 名前変更ポップアップ
+ *************************************************************/
 #rename {
 	border: 1px solid #999999;
-	background: rgba(from #333333 r g b / 0.8);
-	color: #ffffff;
+	background: var(--status-background);
+	color: var(--base-textcolor);
 	position: fixed;
 	position-area: bottom span-right;
 }
@@ -167,15 +207,18 @@ body {
 	width: 200px;
 	padding: 4px;
 	border: 0px;
-	background: #007788;
-	color: #ffffff;
+	background: var(--base-accent-color);
+	color: var(--base-textcolor);
 	font-size: 14px;
 	outline: 0px;
 }
 #rename input:disabled {
-	background: #666666;
+	background: var(--base-disabled-color);
 }
 
+/*************************************************************
+ * ファイル一覧
+ *************************************************************/
 #filelist {
 	padding-top: var(--status-height);
 	display: flex;
@@ -183,7 +226,7 @@ body {
 	align-items: center;
 	list-style-type: none;
 	user-select: none;
-	--loading-margin-top: 72px;
+	--loading-margin-top: 96px;
 }
 #filelist li {
 	margin: 4px;
@@ -191,11 +234,12 @@ body {
 	position: relative;
 }
 #filelist li.filelist_selected {
-	border: 2px solid #00ffff;
+	border: 2px solid var(--filelist-cursor-color);
 }
 #filelist img {
 	vertical-align: middle;
 }
+/* 再生マーク */
 #filelist li.filelist_video::after {
 	--filelist-video-size: 48px;
 	content: '';
@@ -203,12 +247,15 @@ body {
 	height: var(--filelist-video-size);
 	background: rgba(255, 255, 255, 0.7);
 	backdrop-filter: invert(1);
-	clip-path: shape(from 50% 0%, arc to 50.01% 0% of 50% ccw large, line to 50.01% 5%, arc to 50% 5% of 45% cw large, close, move to 30% 20%, line to 80% 50%, line to 30% 80%, close);
+	clip-path: shape(
+		from 50% 0%, arc to 50.01% 0% of 50% ccw large, line to 50.01% 5%, arc to 50% 5% of 45% cw large, close,
+		move to 30% 20%, line to 80% 50%, line to 30% 80%, close);
 	display: block;
 	position: absolute;
-	left: calc(50% - calc(var(--filelist-video-size) / 2));
-	top: calc(50% - calc(var(--filelist-video-size) / 2));
+	left: calc(50% - var(--filelist-video-size) / 2);
+	top: calc(50% - var(--filelist-video-size) / 2);
 }
+/* レーティングシンボル */
 #filelist.filelist_rating li::before {
 	content: '';
 	width: 10px;
@@ -236,10 +283,13 @@ body {
 	background: #00ccff;
 }
 
+/*************************************************************
+ * ビューア画面
+ *************************************************************/
 #viewer {
 	width: 100vw;
 	height: 100vh;
-	background: #111111;
+	background: var(--base-background);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -252,10 +302,13 @@ body {
 	max-height: 100vh;
 }
 
+/*************************************************************
+ * レーティング画面
+ *************************************************************/
 #rating {
 	width: 100vw;
 	height: 100vh;
-	background: #111111;
+	background: var(--base-background);
 	display: flex;
 	flex-flow: column nowrap;
 	position: fixed;
@@ -265,6 +318,9 @@ body {
 }
 #rating_property_block {
 	position: relative;
+	--rating-button-size: 24px;
+	--rating-button-margin: 12px;
+	--rating-button-padding: 12px;
 }
 #rating_property {
 	margin: 4px auto;
@@ -273,7 +329,7 @@ body {
 }
 #rating_property th, #rating_property td {
 	padding: 0px 16px;
-	border: 2px solid #111111;
+	border: 2px solid var(--base-background);
 	line-height: 20px;
 	text-align: center;
 }
@@ -284,43 +340,46 @@ body {
 	text-align: left;
 }
 .rating_property_winner {
-	background: #00bb88;
+	background: var(--base-selected-color);
+}
+#rating_skip, #rating_close {
+	background: var(--status-background);
+	padding: var(--rating-button-padding);
+	border-radius: 50%;
+	position: absolute;
+	top: 8px;
+	cursor: pointer;
 }
 #rating_skip {
-	position: absolute;
-	right: 48px;
-	top: 8px;
-	text-align: center;
-	font-size: 11px;
-	color: #aaaaaa;
-	cursor: pointer;
-}
-#rating_skip::before {
-	content: '';
-	width: 24px;
-	height: 24px;
-	margin: 0px auto;
-	background: #444444;
-	clip-path: shape(from 0% 15%, line to 50% 50%, line to 50% 15%, line to 100% 50%, line to 50% 85%, line to 50% 50%, line to 0% 85%, close);
-	display: block;
+	right: calc(calc(var(--rating-button-margin) + var(--rating-button-padding)) * 2 + var(--rating-button-size));
 }
 #rating_close {
-	position: absolute;
-	right: 12px;
-	top: 8px;
-	text-align: center;
-	font-size: 11px;
-	color: #aaaaaa;
-	cursor: pointer;
+	right: var(--rating-button-margin);
 }
-#rating_close::before {
+#rating_skip::before, #rating_close::before {
 	content: '';
-	width: 24px;
-	height: 24px;
+	width: var(--rating-button-size);
+	height: var(--rating-button-size);
 	margin: 0px auto;
-	background: #444444;
-	clip-path: shape(from 10% 0%, line to 50% 40%, line to 90% 0%, line to 100% 10%, line to 60% 50%, line to 100% 90%, line to 90% 100%, line to 50% 60%, line to 10% 100%, line to 0% 90%, line to 40% 50%, line to 0% 10%, close);
+	background: var(--menu-background);
 	display: block;
+}
+/* スキップボタンのアイコン */
+#rating_skip::before {
+	clip-path: shape(
+		from 0% 15%, line to 50% 50%, line to 50% 15%, line to 100% 50%,
+		line to 50% 85%, line to 50% 50%, line to 0% 85%, close);
+}
+/* 終了ボタンのアイコン */
+#rating_close::before {
+	clip-path: shape(
+		from 10% 0%, line to 50% 40%, line to 90% 0%,
+		line to 100% 10%, line to 60% 50%, line to 100% 90%,
+		line to 90% 100%, line to 50% 60%, line to 10% 100%,
+		line to 0% 90%, line to 40% 50%, line to 0% 10%, close);
+}
+#rating_skip:hover::before, #rating_close:hover::before {
+	background: var(--menu-background-hover);
 }
 #rating_image_block {
 	min-height: 0px;
@@ -336,27 +395,31 @@ body {
 	cursor: pointer;
 }
 #rating_image_block div:hover {
-	border: 2px solid #00ffff;
+	border: 2px solid var(--filelist-cursor-color);
 }
 #rating_image_block img, #rating_image_block video {
 	max-width: 100%;
 	max-height: 100%;
 }
 
+/*************************************************************
+ * ディレクトリ一覧メニュー
+ *************************************************************/
 #dirlist {
-	width: 360px;
+	--dirlist-width: 360px;
+	width: var(--dirlist-width);
 	height: 100vh;
 	max-width: unset;
 	max-height: unset;
 	border: 0px;
-	background: rgba(from #444444 r g b / 0.9);
-	color: #ffffff;
+	background: var(--menu-background);
+	color: var(--menu-textcolor);
 	overflow-x: hidden;
 	position: fixed;
 	left: 0px;
 	top: 0px;
-	--loading-width: 360px;
-	--loading-margin-top: 64px;
+	--loading-width: var(--dirlist-width);
+	--loading-margin-top: 88px;
 }
 #dirlist_msg {
 	margin: 12px 8px;
@@ -366,7 +429,7 @@ body {
 	margin: 0px 8px 8px;
 	padding: 4px 8px;
 	border-radius: 8px;
-	background: #007788;
+	background: var(--base-accent-color);
 	font-size: 12px;
 	line-height: 16px;
 	line-break: anywhere;
@@ -375,59 +438,54 @@ body {
 	cursor: pointer;
 }
 #dirlist_curr:hover {
-	background: oklch(from #007788 calc(l + 0.05) c h);
+	background: var(--base-accent-color-hover);
 }
 #dirlist_curr.dirlist_curr_disabled, #dirlist_curr.dirlist_curr_disabled:hover {
-	background: #666666;
+	background: var(--base-disabled-color);
 	cursor: default;
 }
 #dirlist_dir_block, #dirlist_subdir_block {
 	display: none;
-	--loading-color: #cccccc;
-	--loading-margin-top: 0px;
-	--loading-scale: 50%;
 }
 #dirlist_dir_block.dirlist_block_displayed, #dirlist_subdir_block.dirlist_block_displayed {
 	display: block;
 }
 #dirlist ul {
-	border-top: 1px solid #555555;
+	border-top: 1px solid var(--menu-linecolor);
 }
 #dirlist li {
 	padding: 8px;
-	border-bottom: 1px solid #555555;
+	border-bottom: 1px solid var(--menu-linecolor);
 	line-height: 18px;
 	line-break: anywhere;
 	cursor: pointer;
 }
-/*.dirlist_dir_title {
-
-}*/
 .dirlist_dir_path {
 	font-size: 12px;
-	color: #00bb88;
+	color: var(--base-selected-color);
 }
 .dirlist_subdir_num {
 	margin-left: 8px;
 	font-size: 12px;
 }
 #dirlist li:hover {
-	background: oklch(from #444444 calc(l + 0.2) c h / 0.5);
+	background: var(--menu-background-hover);
 }
 #dirlist li.dirlist_subdir_selected {
-	background: #00bb88;
+	background: var(--base-selected-color);
 }
 #dirlist li.dirlist_subdir_missing {
-	color: #999999;
+	color: var(--menu-textcolor-disabled);
 	cursor: default;
 }
+/* 行方不明ディレクトリの警告マーク */
 #dirlist li.dirlist_subdir_missing::after {
 	--drilist-subdir-missing-size: 16px;
 	content: '!';
 	width: var(--drilist-subdir-missing-size);
 	height: var(--drilist-subdir-missing-size);
 	margin-left: 8px;
-	background: #ffcc00;
+	background: #ffbb00;
 	clip-path: shape(from 50% 0%, line to 100% 90%, line to 0% 90%, close);
 	vertical-align: middle;
 	color: #000000;
@@ -444,6 +502,9 @@ body {
 	text-decoration: line-through;
 }
 
+/*************************************************************
+ * ローディングアニメーション
+ *************************************************************/
 .loading {
 	position: relative;
 }
@@ -459,14 +520,19 @@ body {
 }
 .loading::after {
 	content: '';
-	width: 100px;
-	height: 100px;
+	width: var(--loading-size);
+	height: var(--loading-size);
 	border-radius: 50%;
-	background: conic-gradient(transparent 0deg, transparent var(--loading-angle), var(--loading-color) var(--loading-angle), var(--loading-color) calc(360deg - var(--loading-angle)), transparent calc(360deg - var(--loading-angle)), transparent 360deg);
-	clip-path: path(evenodd, 'M 0 0 L 100 0 L 100 100 L 0 100 L 0 0 L 50 10 A 40 40 0 1 0 50.001 10 Z');
+	background: conic-gradient(
+		transparent 0deg, transparent var(--loading-angle),
+		var(--loading-color) var(--loading-angle), var(--loading-color) calc(360deg - var(--loading-angle)),
+		transparent calc(360deg - var(--loading-angle)), transparent 360deg);
+	clip-path: shape(
+		from 50% 0%, arc to 50.01% 0% of 50% ccw large,
+		line to 50.01% 10%, arc to 50% 10% of 40% cw large, close);
 	animation: 1s linear infinite loading;
 	position: fixed;
-	left: calc(calc(var(--loading-width) / 2) - 50px);
+	left: calc(calc(var(--loading-width) - var(--loading-size)) / 2);
 	top: var(--loading-margin-top);
 	z-index: 1;
 }
@@ -478,14 +544,14 @@ body {
 @keyframes loading {
 	0% {
 		--loading-angle: 15deg;
-		transform: scale(var(--loading-scale)) rotate(0deg);
+		transform: rotate(0deg);
 	}
 	50% {
 		--loading-angle: 165deg;
-		transform: scale(var(--loading-scale)) rotate(180deg);
+		transform: rotate(180deg);
 	}
 	100% {
 		--loading-angle: 15deg;
-		transform: scale(var(--loading-scale)) rotate(360deg);
+		transform: rotate(360deg);
 	}
 }
