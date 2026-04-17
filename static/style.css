@@ -417,6 +417,32 @@ body {
 #dirlist li.dirlist_subdir_selected {
 	background: #00bb88;
 }
+#dirlist li.dirlist_subdir_missing {
+	color: #999999;
+	cursor: default;
+}
+#dirlist li.dirlist_subdir_missing::after {
+	--drilist-subdir-missing-size: 16px;
+	content: '!';
+	width: var(--drilist-subdir-missing-size);
+	height: var(--drilist-subdir-missing-size);
+	margin-left: 8px;
+	background: #ffcc00;
+	clip-path: shape(from 50% 0%, line to 100% 90%, line to 0% 90%, close);
+	vertical-align: middle;
+	color: #000000;
+	font-weight: bold;
+	font-size: 11px;
+	text-align: center;
+	line-height: var(--drilist-subdir-missing-size);
+	display: inline-block;
+}
+#dirlist li.dirlist_subdir_missing:hover {
+	background: inherit;
+}
+#dirlist li.dirlist_subdir_missing .dirlist_subdir_name {
+	text-decoration: line-through;
+}
 
 .loading {
 	position: relative;

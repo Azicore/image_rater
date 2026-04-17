@@ -32,7 +32,7 @@ export default class MainMenu extends Menu {
 		 */
 		this.ratingSymbol = config.ratingSymbol;
 
-		this._defineEvents('filemove', 'ratingope', 'symbol');
+		this._defineEvents('filemove', 'ratingope', 'symbol', 'cleanup');
 		this._initializeMenu();
 		this.addMenuItem('ファイルを移動…', (item) => {
 			this.trigger('filemove');
@@ -53,6 +53,10 @@ export default class MainMenu extends Menu {
 		this.addMenuItem('レーティング平均値を調整', (item) => {
 			this.trigger('ratingope', 'adjust');
 		}, false, true).itemId = 'adjust';
+		this.addPartitionLine();
+		this.addMenuItem('行方不明のディレクトリを削除', (item) => {
+			this.trigger('cleanup');
+		});
 		this.addPartitionLine();
 		this.addMenuItem('レーティングシンボルを表示', (item) => {
 			item.checked = !item.checked;

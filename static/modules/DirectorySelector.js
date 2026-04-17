@@ -91,6 +91,7 @@ export default class DirectorySelector extends EventDispatchable {
 		this.elSubdirList.addEventListener('click', (e) => {
 			const li = e.target.closest('li[data-subdir-id]');
 			if (!li) return;
+			if (li.dataset.missing) return;
 			const subdirId = li.dataset.subdirId;
 			if (subdirId != this.current.subdirId) {
 				const dirId = this.elSubdirList.dataset.dirId;
@@ -182,13 +183,27 @@ export default class DirectorySelector extends EventDispatchable {
 		for (const subdir of subdirs) {
 			const subdirId = subdir.subdirId;
 			this.elSubdirList.appendChild(
-				HTML.li.data({ subdirId: subdirId, subdirName: subdir.name, subdirNum: subdir.numFiles ?? '' }).cls(subdirId == this.current.subdirId ? 'dirlist_subdir_selected' : []).end(
+				HTML.li.data({ subdirId: subdirId, subdirName: subdir.name, subdirNum: subdir.numFiles ?? '' })
+					.cls(subdirId == this.current.subdirId ? 'dirlist_subdir_selected' : [])
+					.cls(subdir.missing ? 'dirlist_subdir_missing' : [])
+					.attr(subdir.missing ? { title: 'ディレクトリが見つかりません。削除または移動された可能性があります。' } : {})
+					.data(subdir.missing ? { missing: true } : {})
+				.end(
 					HTML.span.cls('dirlist_subdir_name').end(subdir.name),
 					HTML.span.cls('dirlist_subdir_num').end(subdir.numFiles != null ? `(${subdir.numFiles})` : '')
 				)
 			);
 		}
 		this.container.classList.remove('loading');
+	}
+
+	/**
+	 * 行方不明のディレクトリを削除する
+	 */
+	async removeMissingDirectories() {
+		if (!this.current.dirId) return;
+		await API.cleanup(this.current.dirId);
+		this.updateRequired = true;
 	}
 
 }

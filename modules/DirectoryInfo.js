@@ -44,20 +44,17 @@ export default class DirectoryInfo extends DataFileLoader {
 		for (const subdirId in this.data) {
 			const subdir = this.data[subdirId];
 			const stats = fs.statSync(path.join(this.dirPath, subdir.name), { throwIfNoEntry: false });
+			subdirNames.push(subdir.name);
+			subdirs[subdirId] = {
+				name: subdir.name,
+				numFiles: subdir.files ? Object.keys(subdir.files).length : null
+			};
 			if (stats && stats.isDirectory()) {
-				subdirNames.push(subdir.name);
-				subdirs[subdirId] = {
-					name: subdir.name,
-					numFiles: subdir.files ? Object.keys(subdir.files).length : null
-				};
+				delete subdir.missing;
 			} else {
-				// 存在しないものは除外 ●→除外ではなく行方不明フラグを立てる
-				if (subdir.files) {
-					for (const fileId in subdir.files) {
-						thumbUpdate.push(this.thumb.getUpdateInfoGenerator(fileId).delete());
-					}
-				}
-				delete this.data[subdirId];
+				// 存在しない場合は行方不明フラグを立てる
+				subdir.missing = true;
+				subdirs[subdirId].missing = true;
 			}
 		}
 		// 新規チェック
@@ -92,7 +89,7 @@ export default class DirectoryInfo extends DataFileLoader {
 		const fileNames = [];
 		const files = {};
 		const subdir = this.data[subdirId];
-		if (!subdir) return files;
+		if (!subdir || subdir.missing) return files;
 		if (!subdir.files) subdir.files = {};
 		const thumbUpdate = [];
 		// 存在チェック
@@ -303,6 +300,27 @@ export default class DirectoryInfo extends DataFileLoader {
 		} else if (mode == 'adjust') {
 			rating.adjust();
 		}
+		this._save();
+		return { ok: true };
+	}
+
+	/**
+	 * 行方不明のディレクトリを全て削除する
+	 * @return {object} 成功時はオブジェクトを返す
+	 */
+	removeMissingDirectories() {
+		const thumbUpdate = [];
+		for (const subdirId in this.data) {
+			const subdir = this.data[subdirId];
+			if (!subdir.missing) continue;
+			if (subdir.files) {
+				for (const fileId in subdir.files) {
+					thumbUpdate.push(this.thumb.getUpdateInfoGenerator(fileId).delete());
+				}
+			}
+			delete this.data[subdirId];
+		}
+		this.thumb.update(thumbUpdate);
 		this._save();
 		return { ok: true };
 	}

@@ -94,6 +94,10 @@ mainMenu.on('ratingope', async (mode) => {
 mainMenu.on('symbol', (toggle) => {
 	fileList.toggleRatingSymbol(toggle);
 });
+// メニューから行方不明のディレクトリ削除が選択されたとき
+mainMenu.on('cleanup', () => {
+	directoryList.removeMissingDirectories();
+});
 // レーティングを開始したとき
 rating.on('open', () => {
 	KeyEventManager.setActiveHandler('rating');

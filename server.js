@@ -125,6 +125,18 @@ app.post('/ratingope', (req, res, next) => {
 	}
 })
 
+// 行方不明のディレクトリを全て削除する
+app.post('/cleanup', (req, res, next) => {
+	const { dirId } = req.body;
+	const { path: dirPath } = config.data.directories[dirId] || {};
+	const dirInfo = new DirectoryInfo(dirPath, thumb);
+	try {
+		res.json(dirInfo.removeMissingDirectories());
+	} catch (e) {
+		res.json({ error: true, message: e.message });
+	}
+});
+
 // index.htmlを返す
 app.use('/', (req, res, next) => {
 //	if (req.path == '/') {

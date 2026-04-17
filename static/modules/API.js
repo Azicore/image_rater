@@ -192,4 +192,19 @@ export default class API {
 		return !result.error;
 	}
 
+	/**
+	 * 行方不明のディレクトリを全て削除する
+	 * @param {string} dirId - ディレクトリID
+	 * @return {boolean} 成功したかどうか
+	 */
+	static async cleanup(dirId) {
+		this.toggleLoading(true);
+		const result = await this._post('/cleanup', {
+			dirId: dirId
+		});
+		if (result.error) this.notifyError(result.message);
+		this.toggleLoading(false);
+		return !result.error;
+	}
+
 }
