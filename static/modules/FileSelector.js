@@ -172,7 +172,7 @@ export default class FileSelector extends EventDispatchable {
 	 */
 	openFile(elem) {
 		// fileopenイベントを発動する
-		this.trigger('fileopen', this.subdir, elem.dataset.fileName);
+		this.trigger('fileopen', this.subdir, this.files[elem.dataset.itemN]);
 	}
 
 	/**
@@ -236,7 +236,7 @@ export default class FileSelector extends EventDispatchable {
 	 */
 	_createItemElement(file) {
 		const HTML = HtmlGenerator;
-		return HTML.li.data('fileName', file.n).end(
+		return HTML.li.data('fileName', file.n).cls(file.isVideo ? 'filelist_video' : []).end(
 			HTML.img.attr({
 				loading: 'lazy', width: file.tw, height: file.th,
 				alt: file.n, title: file.n

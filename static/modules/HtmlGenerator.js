@@ -89,6 +89,14 @@ export default class HtmlGenerator {
 	}
 
 	/**
+	 * videoタグを生成するオブジェクトを返す
+	 * @return {object} generate()を参照
+	 */
+	static get video() {
+		return this.generate('video');
+	}
+
+	/**
 	 * inputタグ（type="text"）を生成するオブジェクトを返す
 	 * @return {object} generate()を参照
 	 */

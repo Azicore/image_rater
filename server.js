@@ -53,7 +53,7 @@ app.get('/thumb/:fileId', async (req, res, next) => {
 	const thumbName = await thumb.get(fileId);
 	if (thumbName) {
 		res.sendFile(thumbName, { root: thumb.THUMB_DIR }, (err) => {
-			if (err) res.sendStatus(404);
+			if (err) next(err);
 		});
 	} else {
 		res.sendStatus(404);
@@ -68,8 +68,8 @@ app.get('/file/:dirId/:subdirName/:fileName', (req, res, next) => {
 		return res.sendStatus(404);
 	}
 //	console.log(`GET /file/${dirId}/${subdirName}/${fileName}`);
-	res.sendFile(fileName, { root: path.join(dirPath, subdirName) }, (err) => {
-		if (err) res.sendStatus(404);
+	res.sendFile(path.join(subdirName, fileName), { root: dirPath }, (err) => {
+		if (err) next(err);
 	});
 });
 
@@ -133,6 +133,14 @@ app.use('/', (req, res, next) => {
 //		res.sendStatus(403);
 //	}
 }, express.static(path.join(__dirname, './static/')));
+
+app.use('/', (err, req, res, next) => {
+	if (res.headersSent) {
+		res.destroy();
+	} else {
+		res.sendStatus(404);
+	}
+});
 
 // サーバーを起動
 app.listen(SERVER_PORT);

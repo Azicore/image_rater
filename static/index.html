@@ -34,9 +34,9 @@ fileList.on('select', (file) => {
 	mainMenu.toggleDisabled('reset', file === 0);
 });
 // ファイルが開かれたとき
-fileList.on('fileopen', (subdir, fileName) => {
+fileList.on('fileopen', (subdir, file) => {
 	// ビューアを起動する
-	viewer.open(subdir, fileName);
+	viewer.open(subdir, file);
 	KeyEventManager.setActiveHandler('viewer');
 });
 // ビューアが閉じられたとき

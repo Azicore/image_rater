@@ -76,6 +76,22 @@ export default class FileInfo {
 	}
 
 	/**
+	 * 画像ファイルかどうかを返す
+	 * @return {boolean} 対応画像ファイルならtrue
+	 */
+	get isImage() {
+		return /\.(?:jpg|jpeg?|png|gif|bmp|svg|webp)$/i.test(this.n);
+	}
+
+	/**
+	 * 動画ファイルかどうかを返す
+	 * @return {boolean} 対応動画ファイルならtrue
+	 */
+	get isVideo() {
+		return /\.mp4$/i.test(this.n);
+	}
+
+	/**
 	 * ファイルサイズを整形して返す
 	 * @return {string} 単位付きのファイルサイズ
 	 */

@@ -65,6 +65,16 @@ export default class RatingPanel extends EventDispatchable {
 		 */
 		this.file2 = null;
 		/**
+		 * 1つ目の動画の要素
+		 * @type {HTMLVideoElement}
+		 */
+		this.video1 = null;
+		/**
+		 * 2つ目の動画の要素
+		 * @type {HTMLVideoElement}
+		 */
+		this.video2 = null;
+		/**
 		 * ファイル情報表示の定義
 		 * @type {object[]}
 		 */
@@ -107,8 +117,11 @@ export default class RatingPanel extends EventDispatchable {
 		});
 		// キーボード操作
 		KeyEventManager.addHandler('rating', (e) => {
+			// レーティングを終了する
+			if (e.code == 'Backspace' || e.code == 'Escape') {
+				this.close();
 			// 1つ目のファイルを選択（←）
-			if (e.code == 'ArrowLeft') {
+			} else if (e.code == 'ArrowLeft') {
 				this.next(this.file1.id, this.file2.id);
 			// 2つ目のファイルを選択（→）
 			} else if (e.code == 'ArrowRight') {
@@ -116,6 +129,24 @@ export default class RatingPanel extends EventDispatchable {
 			// スキップ（S）
 			} else if (e.code == 'KeyS') {
 				this.next();
+			// 1つ目の動画の再生と早送り（Z、X）
+			} else if (e.code == 'KeyZ' || e.code == 'KeyX') {
+				if (!this.video1) return;
+				if (this.video2) this.video2.pause();
+				if (this.video1.paused) {
+					this.video1.play();
+				} else {
+					this.video1.currentTime += 5 * (e.code == 'KeyZ' ? -1 : 1);
+				}
+			// 2つ目の動画の再生と早送り（<、>）
+			} else if (e.code == 'Comma' || e.code == 'Period') {
+				if (!this.video2) return;
+				if (this.video1) this.video1.pause();
+				if (this.video2.paused) {
+					this.video2.play();
+				} else {
+					this.video2.currentTime += 5 * (e.code == 'Comma' ? -1 : 1);
+				}
 			}
 		});
 	}
@@ -156,16 +187,34 @@ export default class RatingPanel extends EventDispatchable {
 		this.container.classList.remove('loading');
 		this.file1 = file1;
 		this.file2 = file2;
-		this.elRatingImage1.replaceChildren(HTML.img.attr({
-			src: API.getFileURL(this.subdir.dirId, this.subdir.subdirName, file1.n),
-			title: file1.n,
-			alt: file1.n
-		}).end());
-		this.elRatingImage2.replaceChildren(HTML.img.attr({
-			src: API.getFileURL(this.subdir.dirId, this.subdir.subdirName, file2.n),
-			title: file2.n,
-			alt: file2.n
-		}).end());
+		const url1 = API.getFileURL(this.subdir.dirId, this.subdir.subdirName, file1.n);
+		const url2 = API.getFileURL(this.subdir.dirId, this.subdir.subdirName, file2.n);
+		this._stopVideo();
+		// 1つ目のファイル
+		if (file1.isVideo) {
+			this.video1 = HTML.video.attr({ src: url1, title: file1.n, controls: 'controls' }).end();
+			this.video1.addEventListener('mouseenter', () => {
+				if (this.video2) this.video2.pause();
+				if (this.video1.paused) this.video1.play();
+			});
+			this.elRatingImage1.replaceChildren(this.video1);
+		} else {
+			const elem = HTML.img.attr({ src: url1, alt: file1.n, title: file1.n }).end();
+			this.elRatingImage1.replaceChildren(elem);
+		}
+		// 2つ目のファイル
+		if (file2.isVideo) {
+			this.video2 = HTML.video.attr({ src: url2, title: file2.n, controls: 'controls' }).end();
+			this.video2.addEventListener('mouseenter', () => {
+				if (this.video1) this.video1.pause();
+				if (this.video2.paused) this.video2.play();
+			});
+			this.elRatingImage2.replaceChildren(this.video2);
+		} else {
+			const elem = HTML.img.attr({ src: url2, alt: file2.n, title: file2.n }).end();
+			this.elRatingImage2.replaceChildren(elem);
+		}
+		// ファイルの情報
 		this.elRatingProperty.innerHTML = '';
 		for (const { title, key, format } of this.propDefs) {
 			const [cls1, cls2] = file1[key] >= file2[key] ? ['rating_property_winner', 'rating_property_loser'] : ['rating_property_loser', 'rating_property_winner'];
@@ -181,6 +230,7 @@ export default class RatingPanel extends EventDispatchable {
 	 * レーティング画面を閉じる
 	 */
 	async close() {
+		this._stopVideo();
 		this.elRatingProperty.innerHTML = '';
 		this.elRatingImage1.innerHTML = '';
 		this.elRatingImage2.innerHTML = '';
@@ -189,6 +239,30 @@ export default class RatingPanel extends EventDispatchable {
 		try {
 			await document.exitFullscreen();
 		} catch (e) { }
+	}
+
+	/**
+	 * 動画再生を停止する
+	 */
+	_stopVideo() {
+		if (this.video1) {
+			let video = this.video1;
+			video.pause();
+			setTimeout(() => {
+				video.pause();
+				video = null;
+			}, 1000);
+			this.video1 = null;
+		}
+		if (this.video2) {
+			let video = this.video2;
+			video.pause();
+			setTimeout(() => {
+				video.pause();
+				video = null;
+			}, 1000);
+			this.video2 = null;
+		}
 	}
 
 }

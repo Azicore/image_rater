@@ -119,7 +119,7 @@ export default class DirectoryInfo extends DataFileLoader {
 		const imageSizePromise = [];
 		for (const item of itemList) {
 			if (fileNames.includes(item)) continue;
-			if (!/\.(jpe?g|jpe|png|gif|svg|webp)$/i.test(item)) continue;
+			if (!/\.(jpg|jpeg?|png|gif|bmp|svg|webp|mp4)$/i.test(item)) continue;
 			const filePath = path.join(this.dirPath, subdir.name, item);
 			const stats = fs.statSync(filePath);
 			if (!stats.isFile()) continue;
@@ -135,11 +135,14 @@ export default class DirectoryInfo extends DataFileLoader {
 				r: RatingManager.INITIAL_RATING,
 				g: RatingManager.INITIAL_WEIGHT
 			};
-			files[fileId] = subdir.files[fileId];
 		}
 		// 新規画像の画像サイズを取得
 		const imageSizes = await Promise.all(imageSizePromise);
 		for (const { fileId, filePath, width, height } of imageSizes) {
+			if (width == null || height == null) {
+				delete subdir.files[fileId];
+				continue;
+			}
 			const info = this.thumb.getUpdateInfoGenerator(fileId).create({ filePath, width, height });
 			thumbUpdate.push(info);
 			Object.assign(subdir.files[fileId], {
@@ -148,6 +151,7 @@ export default class DirectoryInfo extends DataFileLoader {
 				tw: info.thumbWidth,
 				th: info.thumbHeight
 			});
+			files[fileId] = subdir.files[fileId];
 		}
 		this.thumb.update(thumbUpdate);
 		this._save();

@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { execFile } from 'child_process';
 import sharp from 'sharp';
 
 /**
@@ -18,12 +19,38 @@ export default class MediaFile {
 		this.filePath = filePath;
 	}
 
+	/**
+	 * 画像ファイルかどうかを返す
+	 * @return {boolean} 対応画像ファイルならtrue
+	 */
 	get isImage() {
-		return /\.(?:jpe?g|jpe|png|gif|webp)$/i.test(this.filePath);
+		return /\.(?:jpg|jpeg?|png|gif|bmp|svg|webp)$/i.test(this.filePath);
 	}
 
+	/**
+	 * 動画ファイルかどうかを返す
+	 * @return {boolean} 対応動画ファイルならtrue
+	 */
 	get isVideo() {
-		return /\.(?:mp4|mpg)$/i.test(this.filePath);
+		return /\.mp4$/i.test(this.filePath);
+	}
+
+	/**
+	 * 外部コマンドを実行する
+	 * @param {string[]} args - コマンドと引数
+	 * @return {object} 実行結果
+	 */
+	_execCommand(args) {
+		return new Promise((resolve, reject) => {
+			const cmd = args.shift();
+			execFile(cmd, args, (err, stdout) => {
+				try {
+					resolve(JSON.parse(stdout));
+				} catch (e) {
+					resolve();
+				}
+			});
+		});
 	}
 
 	/**
@@ -32,8 +59,13 @@ export default class MediaFile {
 	 */
 	async getSize() {
 		if (!this._metadata) {
-			this._metadata = await sharp(this.filePath).metadata();
 			console.log(`getSize: ${this.filePath}`);
+			if (this.isVideo) {
+				const args = ['ffprobe', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'json', this.filePath];
+				this._metadata = (await this._execCommand(args))?.streams?.[0] || {};
+			} else {
+				this._metadata = await sharp(this.filePath).metadata();
+			}
 		}
 		return this._metadata;
 	}
@@ -46,9 +78,14 @@ export default class MediaFile {
 	 */
 	async createThumbnail(outputPath, thumbWidth, thumbHeight) {
 		console.log(`createThumbnail: ${this.filePath}`);
-		// ※sharpにfilePathを直接渡すと内部でロックが解放されなくなることがあるため、代わりに事前にreadFileで取得したBufferを渡す。
-		const buf = await fs.promises.readFile(this.filePath);
-		await sharp(buf).resize(thumbWidth, thumbHeight).webp({ quality: 80 }).toFile(outputPath);
+		if (this.isVideo) {
+			const args = ['ffmpeg', '-ss', '2', '-i', this.filePath, '-frames:v', '1', '-vf', `scale=${thumbWidth}:${thumbHeight}`, outputPath];
+			await this._execCommand(args);
+		} else {
+			// ※sharpにfilePathを直接渡すと内部でロックが解放されなくなることがあるため、代わりに事前にreadFileで取得したBufferを渡す。
+			const buf = await fs.promises.readFile(this.filePath);
+			await sharp(buf).resize(thumbWidth, thumbHeight).webp({ quality: 80 }).toFile(outputPath);
+		}
 	}
 
 }
