@@ -202,7 +202,7 @@ export default class DirectorySelector extends EventDispatchable {
 	 */
 	async removeMissingDirectories() {
 		if (!this.current.dirId) return;
-		await API.cleanup(this.current.dirId);
+		await API.removeMissingDirectories(this.current.dirId);
 		this.updateRequired = true;
 	}
 

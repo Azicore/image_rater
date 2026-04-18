@@ -193,8 +193,9 @@ export default class FileSelector extends EventDispatchable {
 	/**
 	 * ファイル一覧を更新する
 	 * @param {SubdirectoryInfo} [subdir] - サブディレクトリ情報オブジェクト
+	 * @param {boolean} [forceUpdate] - 強制的に情報更新するかどうか
 	 */
-	async update(subdir) {
+	async update(subdir, forceUpdate = false) {
 		this.toggleNoFile(false);
 		// ディレクトリが指定された場合は再取得
 		if (subdir) {
@@ -202,7 +203,7 @@ export default class FileSelector extends EventDispatchable {
 			this.subdir = subdir;
 			this.selectedFiles.clear(); // 選択を全解除
 			this.container.classList.add('loading');
-			this.files = (await API.getFileList(dirId, subdirId)).map(file => new FileInfo(file));
+			this.files = (await API.getFileList(dirId, subdirId, forceUpdate)).map(file => new FileInfo(file));
 			this.container.innerHTML = '';
 			this.container.classList.remove('loading');
 			this.ratingSymbol = this.getRatingSymbolDefiner();

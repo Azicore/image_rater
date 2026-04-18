@@ -55,8 +55,11 @@ export default class MainMenu extends Menu {
 		}, false, true).itemId = 'adjust';
 		this.addPartitionLine();
 		this.addMenuItem('行方不明のディレクトリを削除', (item) => {
-			this.trigger('cleanup');
-		});
+			this.trigger('cleanup', 'dir');
+		}, false, true).itemId = 'cleanupdir';
+		this.addMenuItem('サムネイルキャッシュを再構築', (item) => {
+			this.trigger('cleanup', 'thumb');
+		}, false, true).itemId = 'cleanupthumb';
 		this.addPartitionLine();
 		this.addMenuItem('レーティングシンボルを表示', (item) => {
 			item.checked = !item.checked;

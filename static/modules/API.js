@@ -78,10 +78,22 @@ export default class API {
 	 * ファイル一覧を返す
 	 * @param {string} dirId - ディレクトリID
 	 * @param {string} subdirId - サブディレクトリID
+	 * @param {boolean} [forceUpdate] - 強制的に情報更新するかどうか
 	 * @return {object[]} ファイル情報オブジェクトの配列
 	 */
-	static async getFileList(dirId, subdirId) {
-		const files = await this._get(`/dir/${dirId}/${subdirId}`);
+	static async getFileList(dirId, subdirId, forceUpdate = false) {
+		let files;
+		// 通常
+		if (!forceUpdate) {
+			files = await this._get(`/dir/${dirId}/${subdirId}`);
+		// サムネイルキャッシュの再構築
+		} else {
+			files = await this._post('/cleanup', {
+				mode: 'thumb',
+				dirId: dirId,
+				subdirId: subdirId
+			});
+		}
 		if (files.error) {
 			this.notifyError(files.message);
 			return [];
@@ -197,9 +209,10 @@ export default class API {
 	 * @param {string} dirId - ディレクトリID
 	 * @return {boolean} 成功したかどうか
 	 */
-	static async cleanup(dirId) {
+	static async removeMissingDirectories(dirId) {
 		this.toggleLoading(true);
 		const result = await this._post('/cleanup', {
+			mode: 'dir',
 			dirId: dirId
 		});
 		if (result.error) this.notifyError(result.message);

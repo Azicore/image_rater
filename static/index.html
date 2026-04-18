@@ -59,6 +59,8 @@ directoryList.on('select', async (subdir) => {
 	subdir.subdirNum = fileList.length;
 	status.updateCurrentDirectory(subdir);
 	mainMenu.toggleDisabled('adjust', subdir.subdirNum == 0);
+	mainMenu.toggleDisabled('cleanupdir', false);
+	mainMenu.toggleDisabled('cleanupthumb', subdir.subdirNum == 0);
 });
 // ファイルの移動先が選択されたとき
 directoryList.on('filemove', async (newSubdir) => {
@@ -66,6 +68,7 @@ directoryList.on('filemove', async (newSubdir) => {
 	const subdir = await fileList.moveFile(newSubdir);
 	status.updateCurrentDirectory(subdir);
 	mainMenu.toggleDisabled('adjust', subdir.subdirNum == 0);
+	mainMenu.toggleDisabled('cleanupthumb', subdir.subdirNum == 0);
 });
 // ディレクトリ選択メニューが閉じられたとき
 directoryList.on('close', () => {
@@ -95,9 +98,21 @@ mainMenu.on('ratingope', async (mode) => {
 mainMenu.on('symbol', (toggle) => {
 	fileList.toggleRatingSymbol(toggle);
 });
-// メニューから行方不明のディレクトリ削除が選択されたとき
-mainMenu.on('cleanup', () => {
-	directoryList.removeMissingDirectories();
+// メニューからクリーンアップ系コマンドが選択されたとき
+mainMenu.on('cleanup', async (mode) => {
+	// 行方不明のディレクトリの削除
+	if (mode == 'dir') {
+		directoryList.removeMissingDirectories();
+	}
+	// サムネイルキャッシュの再構築
+	if (mode == 'thumb') {
+		const subdir = fileList.subdir;
+		await fileList.update(subdir, true);
+		subdir.subdirNum = fileList.length;
+		status.updateCurrentDirectory(subdir);
+		mainMenu.toggleDisabled('adjust', subdir.subdirNum == 0);
+		mainMenu.toggleDisabled('cleanupthumb', subdir.subdirNum == 0);
+	}
 });
 // レーティングを開始したとき
 rating.on('open', () => {

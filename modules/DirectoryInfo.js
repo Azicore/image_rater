@@ -83,13 +83,13 @@ export default class DirectoryInfo extends DataFileLoader {
 	/**
 	 * サブディレクトリ内のファイルの一覧を返す
 	 * @param {string} subdirId - サブディレクトリID
+	 * @param {boolean} [forceUpdate] - 強制的に情報更新するかどうか
 	 * @return {object} ファイルIDをキー、ファイル情報オブジェクトを値とするオブジェクト
 	 */
-	async getFileList(subdirId) {
-		const fileNames = [];
-		const files = {};
+	async getFileList(subdirId, forceUpdate = false) {
+		const existingFiles = {};
 		const subdir = this.data[subdirId];
-		if (!subdir || subdir.missing) return files;
+		if (!subdir || subdir.missing) return {};
 		if (!subdir.files) subdir.files = {};
 		const thumbUpdate = [];
 		// 存在チェック
@@ -98,14 +98,17 @@ export default class DirectoryInfo extends DataFileLoader {
 			const fileName = file.n;
 			const filePath = path.join(this.dirPath, subdir.name, fileName);
 			const stats = fs.statSync(filePath, { throwIfNoEntry: false });
-			// ファイルに変更がない場合のみ既存扱い
-			if (stats && stats.isFile() && stats.size == file.s && Math.floor(stats.mtimeMs / 1000) == file.m) {
-				fileNames.push(fileName);
-				files[fileId] = file;
-			// 存在しないものと変更されたものは除外 ●→変更するとレーティングが消えるが問題ないか？
-			} else {
+			// 存在しない場合
+			if (!stats || !stats.isFile()) {
+				// エントリとサムネイルを完全削除
 				delete subdir.files[fileId];
 				thumbUpdate.push(this.thumb.getUpdateInfoGenerator(fileId).delete());
+			// 変更がある場合・強制的に情報更新する場合
+			} else if (forceUpdate || stats.size != file.s || Math.floor(stats.mtimeMs / 1000) != file.m) {
+				existingFiles[fileName] = [fileId, filePath, stats];
+			// 変更がない場合
+			} else {
+				existingFiles[fileName] = true;
 			}
 		}
 		// 新規チェック
@@ -114,45 +117,55 @@ export default class DirectoryInfo extends DataFileLoader {
 			itemList = fs.readdirSync(path.join(this.dirPath, subdir.name));
 		} catch (e) { }
 		const imageSizePromise = [];
-		for (const item of itemList) {
-			if (fileNames.includes(item)) continue;
-			if (!/\.(jpg|jpeg?|png|gif|bmp|svg|webp|mp4)$/i.test(item)) continue;
-			const filePath = path.join(this.dirPath, subdir.name, item);
-			const stats = fs.statSync(filePath);
-			if (!stats.isFile()) continue;
-			const fileId = UniqueId.get();
+		for (const name of itemList) {
+			// 変更がない既存ファイルはスキップ
+			if (existingFiles[name] === true) continue;
+			if (!/\.(jpg|jpeg?|png|gif|bmp|svg|webp|mp4)$/i.test(name)) continue;
+			let fileId, filePath, stats;
+			if (existingFiles[name]) {
+				[fileId, filePath, stats] = existingFiles[name];
+			} else {
+				// 新規ファイルは情報を取得してファイルIDを生成
+				filePath = path.join(this.dirPath, subdir.name, name);
+				stats = fs.statSync(filePath);
+				if (!stats.isFile()) continue;
+				fileId = UniqueId.get();
+			}
 			imageSizePromise.push((async () => {
+				const [ size, modified ] = [ stats.size, Math.floor(stats.mtimeMs / 1000)];
 				const { width, height } = await (new MediaFile(filePath).getSize());
-				return { fileId, filePath, width, height };
+				return { fileId, filePath, name, size, modified, width, height };
 			})());
-			subdir.files[fileId] = {
-				n: item,
-				s: stats.size,
-				m: Math.floor(stats.mtimeMs / 1000),
-				r: RatingManager.INITIAL_RATING,
-				g: RatingManager.INITIAL_WEIGHT
-			};
 		}
 		// 新規画像の画像サイズを取得
 		const imageSizes = await Promise.all(imageSizePromise);
-		for (const { fileId, filePath, width, height } of imageSizes) {
+		for (const { fileId, filePath, name, size, modified, width, height } of imageSizes) {
 			if (width == null || height == null) {
-				delete subdir.files[fileId];
 				continue;
 			}
 			const info = this.thumb.getUpdateInfoGenerator(fileId).create({ filePath, width, height });
 			thumbUpdate.push(info);
+			if (!existingFiles[name]) {
+				// 新規ファイルはオブジェクトを新規作成
+				subdir.files[fileId] = {
+					n: name,
+					r: RatingManager.INITIAL_RATING,
+					g: RatingManager.INITIAL_WEIGHT
+				};
+			}
+			// 更新する情報を上書きする
 			Object.assign(subdir.files[fileId], {
+				s: size,
+				m: modified,
 				w: width,
 				h: height,
 				tw: info.thumbWidth,
 				th: info.thumbHeight
 			});
-			files[fileId] = subdir.files[fileId];
 		}
 		this.thumb.update(thumbUpdate);
 		this._save();
-		return files;
+		return subdir.files;
 	}
 
 	/**

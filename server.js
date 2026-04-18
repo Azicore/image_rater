@@ -125,13 +125,19 @@ app.post('/ratingope', (req, res, next) => {
 	}
 })
 
-// 行方不明のディレクトリを全て削除する
-app.post('/cleanup', (req, res, next) => {
-	const { dirId } = req.body;
+// クリーンアップを行なう
+app.post('/cleanup', async (req, res, next) => {
+	const { dirId, subdirId, mode } = req.body;
 	const { path: dirPath } = config.data.directories[dirId] || {};
 	const dirInfo = new DirectoryInfo(dirPath, thumb);
 	try {
-		res.json(dirInfo.removeMissingDirectories());
+		// 行方不明のディレクトリの削除
+		if (mode == 'dir') {
+			res.json(dirInfo.removeMissingDirectories());
+		// サムネイルキャッシュの再構築
+		} else if (mode == 'thumb') {
+			res.json(await dirInfo.getFileList(subdirId, true));
+		}
 	} catch (e) {
 		res.json({ error: true, message: e.message });
 	}

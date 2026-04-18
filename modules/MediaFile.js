@@ -79,7 +79,7 @@ export default class MediaFile {
 	async createThumbnail(outputPath, thumbWidth, thumbHeight) {
 		console.log(`createThumbnail: ${this.filePath}`);
 		if (this.isVideo) {
-			const args = ['ffmpeg', '-ss', '2', '-i', this.filePath, '-frames:v', '1', '-vf', `scale=${thumbWidth}:${thumbHeight}`, outputPath];
+			const args = ['ffmpeg', '-ss', '2', '-y', '-i', this.filePath, '-frames:v', '1', '-vf', `scale=${thumbWidth}:${thumbHeight}`, outputPath];
 			await this._execCommand(args);
 		} else {
 			// ※sharpにfilePathを直接渡すと内部でロックが解放されなくなることがあるため、代わりに事前にreadFileで取得したBufferを渡す。
