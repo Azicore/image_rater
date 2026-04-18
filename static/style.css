@@ -182,6 +182,10 @@ body {
 #rating_button:hover {
 	background: var(--base-accent-color-hover);
 }
+#rating_button.rating_button_disabled, #rating_button.rating_button_disabled:hover {
+	background: var(--base-disabled-color);
+	cursor: default;
+}
 
 /*************************************************************
  * 名前変更ポップアップ
@@ -227,6 +231,20 @@ body {
 	list-style-type: none;
 	user-select: none;
 	--loading-margin-top: 96px;
+}
+#filelist.filelist_initial::before {
+	content: 'ディレクトリを選択して下さい。';
+	width: 100vw;
+	margin-top: 48px;
+	text-align: center;
+	display: block;
+}
+#filelist.filelist_nofile::before {
+	content: 'ファイルがありません。';
+	width: 100vw;
+	margin-top: 48px;
+	text-align: center;
+	display: block;
 }
 #filelist li {
 	margin: 4px;

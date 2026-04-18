@@ -80,6 +80,8 @@ export default class FileSelector extends EventDispatchable {
 		API.notifyError = (msg) => alert(msg);
 		// レーティングシンボルの表示
 		this.toggleRatingSymbol(config.ratingSymbol);
+		// 初期メッセージの表示
+		this.toggleNoFile(true, true);
 	}
 
 	/**
@@ -152,6 +154,19 @@ export default class FileSelector extends EventDispatchable {
 	}
 
 	/**
+	 * ファイル無しメッセージの表示を切り替える
+	 * @param {boolean} toggle - 表示するかどうか
+	 * @param {boolean} [isInit] - 初期メッセージにするかどうか（toggle=trueの場合のみ）
+	 */
+	toggleNoFile(toggle, isInit = false) {
+		this.container.classList.remove('filelist_initial', 'filelist_nofile');
+		if (toggle) {
+			const cls = isInit ? 'filelist_initial' : 'filelist_nofile';
+			this.container.classList.add(cls);
+		}
+	}
+
+	/**
 	 * ソート関数を設定する
 	 * @param {string} sortKey - ソートキー
 	 * @param {boolean} sortReversed - 逆順かどうか
@@ -180,6 +195,7 @@ export default class FileSelector extends EventDispatchable {
 	 * @param {SubdirectoryInfo} [subdir] - サブディレクトリ情報オブジェクト
 	 */
 	async update(subdir) {
+		this.toggleNoFile(false);
 		// ディレクトリが指定された場合は再取得
 		if (subdir) {
 			const { dirId, subdirId } = subdir;
@@ -192,7 +208,8 @@ export default class FileSelector extends EventDispatchable {
 			this.ratingSymbol = this.getRatingSymbolDefiner();
 		}
 		if (this.files.length == 0) {
-			// ●ファイルがありません
+			// ファイルなし
+			this.toggleNoFile(true);
 		} else {
 			// ソート
 			this.files.sort(this.sortFunc);
@@ -250,6 +267,7 @@ export default class FileSelector extends EventDispatchable {
 	 * @return {SubdirectoryInfo} 現在のサブディレクトリ
 	 */
 	async moveFile(newSubdir) {
+		this.toggleNoFile(false);
 		const fileIds = Array.from(this.selectedFiles, (elem) => this.files[elem.dataset.itemN].id);
 		const movedFileIds = await API.move(this.subdir, fileIds, newSubdir.subdirId);
 		this.selectedFiles.clear();
@@ -267,7 +285,8 @@ export default class FileSelector extends EventDispatchable {
 		this.elems = this.files.map(file => file.elem);
 		this.subdir.subdirNum -= movedFileIds.length; // ファイル数を更新する
 		if (this.files.length == 0) {
-			//●ファイルがありません
+			// ファイルなし
+			this.toggleNoFile(true);
 		} else {
 			this.selectedFiles.set(this.elems[0]);
 		}
@@ -297,8 +316,8 @@ export default class FileSelector extends EventDispatchable {
 	 * @return {object} レーティングを計算するget()関数を持ったオブジェクト
 	 */
 	getRatingSymbolDefiner() {
-		const ratingMax = this.files.reduce((file1, file2) => file1.r > file2.r ? file1 : file2).r;
-		const ratingMin = this.files.reduce((file1, file2) => file1.r > file2.r ? file2 : file1).r;
+		const ratingMax = this.files.length ? this.files.reduce((file1, file2) => file1.r > file2.r ? file1 : file2).r : 0;
+		const ratingMin = this.files.length ? this.files.reduce((file1, file2) => file1.r > file2.r ? file2 : file1).r : 0;
 		const ratingRange = ratingMax - ratingMin;
 		return {
 			get: (rating) => {

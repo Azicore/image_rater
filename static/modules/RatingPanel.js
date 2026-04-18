@@ -87,6 +87,7 @@ export default class RatingPanel extends EventDispatchable {
 		];
 
 		this.container.style.display = 'none';
+		this.toggleRatingButton(false);
 		this._defineEvents('open', 'close');
 		this._setEventHandlers();
 	}
@@ -97,6 +98,7 @@ export default class RatingPanel extends EventDispatchable {
 	_setEventHandlers() {
 		// レーティングボタン
 		this.elRatingButton.addEventListener('click', () => {
+			if (this.elRatingButton.classList.contains('rating_button_disabled')) return;
 			this.open();
 		});
 		// 1つ目のファイルを選択
@@ -157,6 +159,19 @@ export default class RatingPanel extends EventDispatchable {
 	 */
 	setSubdir(subdir) {
 		this.subdir = subdir;
+	}
+
+	/**
+	 * レーティングボタンの有効・無効を切り替える
+	 * @param {boolean} toggle - 有効にするかどうか
+	 */
+	toggleRatingButton(toggle) {
+		this.elRatingButton.classList.toggle('rating_button_disabled', !toggle);
+		if (toggle) {
+			this.elRatingButton.removeAttribute('title');
+		} else {
+			this.elRatingButton.setAttribute('title', 'レーティングを行うにはディレクトリを選択して下さい。');
+		}
 	}
 
 	/**

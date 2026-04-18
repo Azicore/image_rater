@@ -54,6 +54,7 @@ directoryList.on('select', async (subdir) => {
 	// ステータスバーを更新してファイル一覧を作成する
 	status.updateCurrentDirectory(subdir);
 	rating.setSubdir(subdir);
+	rating.toggleRatingButton(true);
 	await fileList.update(subdir);
 	subdir.subdirNum = fileList.length;
 	status.updateCurrentDirectory(subdir);
