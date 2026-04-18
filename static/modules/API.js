@@ -123,13 +123,13 @@ export default class API {
 	}
 
 	/**
-	 * ファイル名を変更する
+	 * ファイル名・ディレクトリ名を変更する
 	 * @param {SubdirectoryInfo} subdir - サブディレクトリ情報オブジェクト
-	 * @param {string} fileId - ファイルID
 	 * @param {string} newName - 新しい名前
+	 * @param {string} [fileId] - ファイルID
 	 * @return {boolean} 成功したかどうか
 	 */
-	static async rename(subdir, fileId, newName) {
+	static async rename(subdir, newName, fileId) {
 		this.toggleLoading(true);
 		const result = await this._post('/rename', {
 			dirId: subdir.dirId,

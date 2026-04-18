@@ -73,7 +73,7 @@ app.get('/file/:dirId/:subdirName/:fileName', (req, res, next) => {
 	});
 });
 
-// ファイル名を変更する
+// ファイル名・ディレクトリ名を変更する
 app.post('/rename', (req, res, next) => {
 	const { dirId, subdirId, fileId, newName } = req.body;
 	const { path: dirPath } = config.data.directories[dirId] || {};

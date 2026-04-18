@@ -32,14 +32,14 @@ export default class MainMenu extends Menu {
 		 */
 		this.ratingSymbol = config.ratingSymbol;
 
-		this._defineEvents('filemove', 'ratingope', 'symbol', 'cleanup');
+		this._defineEvents('filemove', 'renamesubdir', 'ratingope', 'cleanup', 'symbol');
 		this._initializeMenu();
 		this.addMenuItem('ファイルを移動…', (item) => {
 			this.trigger('filemove');
 		}, false, true).itemId = 'move';
 		this.addMenuItem('ディレクトリ名を変更…', (item) => {
-
-		});
+			this.trigger('renamesubdir');
+		}, false, true).itemId = 'subdirrename';
 		this.addPartitionLine();
 		this.addMenuItem('レーティングと選択重みを交換', (item) => {
 			this.trigger('ratingope', 'exchange');

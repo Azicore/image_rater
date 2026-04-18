@@ -23,6 +23,23 @@ const rating = new RatingPanel();
 const mainMenu = new MainMenu(config);
 const sortMenu = new SortMenu(config);
 
+// ディレクトリの更新
+const initialize = async (subdir, forceUpdate = false) => {
+	// ステータスバーの更新
+	status.updateCurrentDirectory(subdir);
+	// レーティングボタンの有効化
+	rating.setSubdir(subdir);
+	rating.toggleRatingButton(true);
+	// ファイル一覧の作成
+	await fileList.update(subdir, forceUpdate);
+	subdir.subdirNum = fileList.length;
+	status.updateCurrentDirectory(subdir);
+	// メニュー項目の切り替え
+	mainMenu.toggleDisabled('subdirrename', false);
+	mainMenu.toggleDisabled('adjust', subdir.subdirNum == 0);
+	mainMenu.toggleDisabled('cleanupdir', false);
+	mainMenu.toggleDisabled('cleanupthumb', subdir.subdirNum == 0);
+};
 // ファイルが選択されたとき
 fileList.on('select', (file) => {
 	// ステータスバーを更新する
@@ -51,16 +68,7 @@ status.on('directorymenuopen', () => {
 });
 // ディレクトリが選択されたとき
 directoryList.on('select', async (subdir) => {
-	// ステータスバーを更新してファイル一覧を作成する
-	status.updateCurrentDirectory(subdir);
-	rating.setSubdir(subdir);
-	rating.toggleRatingButton(true);
-	await fileList.update(subdir);
-	subdir.subdirNum = fileList.length;
-	status.updateCurrentDirectory(subdir);
-	mainMenu.toggleDisabled('adjust', subdir.subdirNum == 0);
-	mainMenu.toggleDisabled('cleanupdir', false);
-	mainMenu.toggleDisabled('cleanupthumb', subdir.subdirNum == 0);
+	initialize(subdir);
 });
 // ファイルの移動先が選択されたとき
 directoryList.on('filemove', async (newSubdir) => {
@@ -84,10 +92,19 @@ sortMenu.on('sort', (sortKey, sortReversed) => {
 status.on('filerename', (fileId, newName) => {
 	fileList.updateFileName(fileId, newName);
 });
+// ディレクトリ名変更が成功したとき
+status.on('subdirrename', async (subdir) => {
+	initialize(subdir);
+	directoryList.updateRequired = true;
+});
 // メニューからファイル移動が選択されたとき
 mainMenu.on('filemove', () => {
 	directoryList.show(true);
 	status.hide();
+});
+// メニューからディレクトリ名変更が選択されたとき
+mainMenu.on('renamesubdir', () => {
+	status.renameSubdirectory();
 });
 // メニューからレーティング操作が選択されたとき
 mainMenu.on('ratingope', async (mode) => {
@@ -106,12 +123,7 @@ mainMenu.on('cleanup', async (mode) => {
 	}
 	// サムネイルキャッシュの再構築
 	if (mode == 'thumb') {
-		const subdir = fileList.subdir;
-		await fileList.update(subdir, true);
-		subdir.subdirNum = fileList.length;
-		status.updateCurrentDirectory(subdir);
-		mainMenu.toggleDisabled('adjust', subdir.subdirNum == 0);
-		mainMenu.toggleDisabled('cleanupthumb', subdir.subdirNum == 0);
+		initialize(fileList.subdir, true);
 	}
 });
 // レーティングを開始したとき

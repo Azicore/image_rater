@@ -38,12 +38,16 @@ export default class StatusBar extends EventDispatchable {
 		 */
 		this.rename = new RenamePopup();
 
-		this._defineEvents('directorymenuopen', 'filerename');
+		this._defineEvents('directorymenuopen', 'filerename', 'subdirrename');
 		this._setEventHandlers();
-		// 名前変更に成功したら表示を変更してfilerenameイベントを発火する
+		// ファイル名変更に成功したら表示を変更してfilerenameイベントを発火する
 		this.rename.on('filerename', (fileId, newName) => {
 			this.elFileName.innerText = newName;
 			this.trigger('filerename', fileId, newName);
+		});
+		// ディレクトリ名変更に成功したらsubdirrenameイベントを発火する
+		this.rename.on('subdirrename', (subdir) => {
+			this.trigger('subdirrename', subdir);
 		});
 	}
 
@@ -102,6 +106,13 @@ export default class StatusBar extends EventDispatchable {
 		this.rename.close();
 		this.rename.fileId = file.id;
 		this.rename.fileName = file.n;
+	}
+
+	/**
+	 * ディレクトリ名変更ポップアップを表示する
+	 */
+	renameSubdirectory() {
+		this.rename.openSubdirRename(this.elCurrentDir);
 	}
 
 }

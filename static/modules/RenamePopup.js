@@ -23,7 +23,7 @@ export default class RenamePopup extends EventDispatchable {
 		 * 新しいファイル名の入力欄の要素
 		 * @type {HTMLElement}
 		 */
-		this.elFileInput = HTML.inputText.attr('id', 'rename_file_input').end();
+		this.elFileInput = HTML.inputText.attr({ id: 'rename_file_input', autocomplete: 'off' }).end();
 		/**
 		 * 新しいファイル名の拡張子の要素
 		 * @type {HTMLElement}
@@ -34,6 +34,16 @@ export default class RenamePopup extends EventDispatchable {
 		 * @type {HTMLElement}
 		 */
 		this.elFileBlock = HTML.div.end(HTML.p.end('ファイル名を変更：'), HTML.p.end(this.elFileInput, this.elFileExt));
+		/**
+		 * 新しいディレクトリ名の入力欄の要素
+		 * @type {HTMLElement}
+		 */
+		this.elSubdirInput = HTML.inputText.attr({ id: 'rename_subdir_input', autocomplete: 'off' }).end();
+		/**
+		 * ディレクトリ名変更全体の要素
+		 * @type {HTMLElement}
+		 */
+		this.elSubdirBlock = HTML.div.end(HTML.p.end('ディレクトリ名を変更：'), HTML.p.end(this.elSubdirInput));
 		/**
 		 * 表示中のパネル
 		 * @type {ExclusiveClassName}
@@ -56,7 +66,8 @@ export default class RenamePopup extends EventDispatchable {
 		this.fileName = null;
 
 		this.container.appendChild(this.elFileBlock);
-		this._defineEvents('filerename');
+		this.container.appendChild(this.elSubdirBlock);
+		this._defineEvents('filerename', 'subdirrename');
 		this._setEventHandlers();
 
 	}
@@ -69,9 +80,15 @@ export default class RenamePopup extends EventDispatchable {
 			if (e.code == 'Enter') {
 				this._submitFileRename();
 				e.stopPropagation();
-			} else if (e.code == 'Backspace') {
+			} else if (/^(?:Arrow(?:Left|Right|Up|Down)|Backspace)$/.test(e.code)) {
 				e.stopPropagation();
-			} else if (/^Arrow(?:Left|Right|Up|Down)$/.test(e.code)) {
+			}
+		});
+		this.elSubdirInput.addEventListener('keydown', (e) => {
+			if (e.code == 'Enter') {
+				this._submitSubdirRename();
+				e.stopPropagation();
+			} else if (/^(?:Arrow(?:Left|Right|Up|Down)|Backspace)$/.test(e.code)) {
 				e.stopPropagation();
 			}
 		});
@@ -88,7 +105,17 @@ export default class RenamePopup extends EventDispatchable {
 		this.elFileExt.innerText = name[2];
 		this.container.togglePopover({ force: true, source });
 		this.elFileInput.focus();
-		//this.elFileInput.select();
+	}
+
+	/**
+	 * ディレクトリ名変更ポップアップを開く
+	 * @param {HTMLElement} source - Popoverのsourceとする要素
+	 */
+	openSubdirRename(source) {
+		this.displayedBlockClass.setTo(this.elSubdirBlock);
+		this.elSubdirInput.value = this.subdir.subdirName;
+		this.container.togglePopover({ force: true, source });
+		this.elSubdirInput.focus();
 	}
 
 	/**
@@ -104,13 +131,29 @@ export default class RenamePopup extends EventDispatchable {
 	async _submitFileRename() {
 		this.elFileInput.disabled = true;
 		const newName = this.elFileInput.value !== '' ? `${this.elFileInput.value}${this.elFileExt.innerText}` : '';
-		const result = await API.rename(this.subdir, this.fileId, newName);
+		const result = await API.rename(this.subdir, newName, this.fileId);
 		this.elFileInput.disabled = false;
 		// ファイル名変更成功時
 		if (result) {
 			this.close();
 			this.fileName = newName;
 			this.trigger('filerename', this.fileId, this.fileName);
+		}
+	}
+
+	/**
+	 * ディレクトリ名を変更する
+	 */
+	async _submitSubdirRename() {
+		this.elSubdirInput.disabled = true;
+		const newName = this.elSubdirInput.value;
+		const result = await API.rename(this.subdir, newName);
+		this.elSubdirInput.disabled = false;
+		// ディレクトリ名変更成功時
+		if (result) {
+			this.close();
+			this.subdir.subdirName = newName;
+			this.trigger('subdirrename', this.subdir);
 		}
 	}
 
