@@ -50,6 +50,16 @@ export default class RatingPanel extends EventDispatchable {
 		 */
 		this.elRatingClose = document.getElementById('rating_close');
 		/**
+		 * モバイル用の1つ目の選択ボタン
+		 * @type {HTMLElement}
+		 */
+		this.elRatingSelect1 = document.getElementById('rating_select_1');
+		/**
+		 * モバイル用の2つ目の選択ボタン
+		 * @type {HTMLElement}
+		 */
+		this.elRatingSelect2 = document.getElementById('rating_select_2');
+		/**
 		 * サブディレクトリ情報オブジェクト
 		 * @type {SubdirectoryInfo}
 		 */
@@ -85,11 +95,17 @@ export default class RatingPanel extends EventDispatchable {
 			{ title: 'ファイルサイズ', key: 's', format: 'fileSize' },
 			{ title: '更新日時',       key: 'm', format: 'date' }
 		];
+		/**
+		 * モバイル表示かどうか
+		 * @type {boolean}
+		 */
+		this.isMobile = false;
 
 		this.container.style.display = 'none';
 		this.toggleRatingButton(false);
 		this._defineEvents('open', 'close');
 		this._setEventHandlers();
+		API.toggleLoading = (toggle, target) => target == 'rating' && this.container.classList.toggle('loading', toggle);
 	}
 
 	/**
@@ -103,10 +119,20 @@ export default class RatingPanel extends EventDispatchable {
 		});
 		// 1つ目のファイルを選択
 		this.elRatingImage1.addEventListener('click', () => {
+			if (this.isMobile) return;
 			this.next(this.file1.id, this.file2.id);
 		});
 		// 2つ目のファイルを選択
 		this.elRatingImage2.addEventListener('click', () => {
+			if (this.isMobile) return;
+			this.next(this.file2.id, this.file1.id);
+		});
+		// モバイル用ボタンで1つ目のファイルを選択
+		this.elRatingSelect1.addEventListener('click', () => {
+			this.next(this.file1.id, this.file2.id);
+		});
+		// モバイル用ボタンで2つ目のファイルを選択
+		this.elRatingSelect2.addEventListener('click', () => {
 			this.next(this.file2.id, this.file1.id);
 		});
 		// スキップボタン
@@ -193,13 +219,11 @@ export default class RatingPanel extends EventDispatchable {
 	 */
 	async next(winnerFileId, loserFileId) {
 		const HTML = HtmlGenerator;
-		this.container.classList.add('loading');
 		const [file1, file2] = (await API.rating(this.subdir, winnerFileId, loserFileId)).map(file => new FileInfo(file));
 		if (!file1 || !file2) {
 			this.close();
 			return;
 		}
-		this.container.classList.remove('loading');
 		this.file1 = file1;
 		this.file2 = file2;
 		const url1 = API.getFileURL(this.subdir.dirId, this.subdir.subdirName, file1.n);

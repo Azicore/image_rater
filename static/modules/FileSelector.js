@@ -62,6 +62,18 @@ export default class FileSelector extends EventDispatchable {
 		 * @type {object}
 		 */
 		this.ratingSymbol = null;
+		/**
+		 * モバイル表示かどうか
+		 * @type {boolean}
+		 */
+		this.isMobile = false;
+		/**
+		 * モバイル用にサムネイルを何倍にするか
+		 * @type {number}
+		 */
+		this.MOBILE_SIZE_RATE = 0.487;
+		// ※16:9の画像で高さを200にすると幅が356になるが、これを幅360のデバイスでちょうど横2枚並べるには
+		// マージン13を除いて1枚173（=(360-13)/2）以下である必要がある。173/356=0.487。
 
 		this._defineEvents('select', 'fileopen', 'next');
 		this._setEventHandlers();
@@ -76,7 +88,7 @@ export default class FileSelector extends EventDispatchable {
 			bottom: parseInt(paddingBottom, 10) || 0
 		}))(getComputedStyle(this.container));
 		// 更新系API通信時のローディング表示とエラー表示
-		API.toggleLoading = (toggle) => this.container.classList.toggle('loading', toggle);
+		API.toggleLoading = (toggle, target) => /^(?:rename|move|ratingope|cleanup)$/.test(target) && this.container.classList.toggle('loading', toggle);
 		API.notifyError = (msg) => alert(msg);
 		// レーティングシンボルの表示
 		this.toggleRatingSymbol(config.ratingSymbol);
@@ -88,6 +100,7 @@ export default class FileSelector extends EventDispatchable {
 	 * DOMイベントを設定する
 	 */
 	_setEventHandlers() {
+		let touchTimer = null;
 		// ファイルがクリックされたとき
 		this.container.addEventListener('click', (e) => {
 			const li = e.target.closest('li');
@@ -97,7 +110,7 @@ export default class FileSelector extends EventDispatchable {
 			if (this.selectedFiles.length == 1 && 250 > clickedTime - this.lastClickedTime) {
 				this.lastClickedTime = 0;
 				// ファイルを開く
-				this.openFile(li);
+				this.openFile();
 				return;
 			}
 			this.lastClickedTime = clickedTime;
@@ -111,6 +124,21 @@ export default class FileSelector extends EventDispatchable {
 			} else {
 				this.selectedFiles.set(li);
 			}
+		});
+		// モバイル用イベント
+		this.container.addEventListener('touchstart', (e) => {
+			const li = e.target.closest('li');
+			if (!li) return;
+			touchTimer = setTimeout(() => {
+				this.selectedFiles.toggle(li);
+			}, 1000);
+		});
+		this.container.addEventListener('touchend', (e) => {
+			clearTimeout(touchTimer);
+		});
+		this.container.addEventListener('contextmenu', (e) => {
+			// 長押しで出てくるメニュー対策
+			if (this.isMobile) e.preventDefault();
 		});
 		// キーボード操作
 		KeyEventManager.addHandler('default', (e) => {
@@ -128,19 +156,17 @@ export default class FileSelector extends EventDispatchable {
 				this.selectedFiles.nextRow(this.elems) && e.preventDefault();
 			// ファイルを開く
 			} else if (e.code == 'Enter') {
-				if (this.selectedFiles.length == 1) this.openFile(this.selectedFiles[0]);
+				if (this.selectedFiles.length == 1) this.openFile();
 			}
 		});
 		// キーボード操作（ビューア表示時）
 		KeyEventManager.addHandler('viewer', (e) => {
 			// 前のファイル（←）
 			if (e.code == 'ArrowLeft') {
-				this.selectedFiles.prev(this.elems);
-				this.openFile(this.selectedFiles[0]);
+				this.openFile(false);
 			// 次のファイル（→）
 			} else if (e.code == 'ArrowRight') {
-				this.selectedFiles.next(this.elems);
-				this.openFile(this.selectedFiles[0]);
+				this.openFile(true);
 			}
 		});
 	}
@@ -183,9 +209,13 @@ export default class FileSelector extends EventDispatchable {
 
 	/**
 	 * ファイルを開く
-	 * @param {HTMLElement} elem - 開くファイルの要素
+	 * @param {boolean} [move] - 前後のファイルへ移動するかどうか
 	 */
-	openFile(elem) {
+	openFile(move = null) {
+		if (move != null) {
+			this.selectedFiles[move ? 'next' : 'prev'](this.elems);
+		}
+		const elem = this.selectedFiles[0];
 		// fileopenイベントを発動する
 		this.trigger('fileopen', this.subdir, this.files[elem.dataset.itemN]);
 	}
@@ -254,9 +284,10 @@ export default class FileSelector extends EventDispatchable {
 	 */
 	_createItemElement(file) {
 		const HTML = HtmlGenerator;
+		const [tw, th] = this.isMobile ? [Math.round(file.tw * this.MOBILE_SIZE_RATE), Math.round(file.th * this.MOBILE_SIZE_RATE)] : [file.tw, file.th];
 		return HTML.li.data('fileName', file.n).cls(file.isVideo ? 'filelist_video' : []).end(
 			HTML.img.attr({
-				loading: 'lazy', width: file.tw, height: file.th,
+				loading: 'lazy', width: tw, height: th,
 				alt: file.n, title: file.n
 			}).attr('src', API.getThumbnailURL(file.id)).end() // ※Lazy loadingを確実にするため、srcは最後に分けて追加
 		);

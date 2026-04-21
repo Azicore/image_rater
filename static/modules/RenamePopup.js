@@ -69,6 +69,11 @@ export default class RenamePopup extends EventDispatchable {
 		this.container.appendChild(this.elSubdirBlock);
 		this._defineEvents('filerename', 'subdirrename');
 		this._setEventHandlers();
+		API.toggleLoading = (toggle, target) => {
+			if (target != 'rename') return;
+			this.elFileInput.disabled = toggle;
+			this.elSubdirInput.disabled = toggle;
+		};
 
 	}
 
@@ -129,10 +134,8 @@ export default class RenamePopup extends EventDispatchable {
 	 * ファイル名変更を実行する
 	 */
 	async _submitFileRename() {
-		this.elFileInput.disabled = true;
 		const newName = this.elFileInput.value !== '' ? `${this.elFileInput.value}${this.elFileExt.innerText}` : '';
 		const result = await API.rename(this.subdir, newName, this.fileId);
-		this.elFileInput.disabled = false;
 		// ファイル名変更成功時
 		if (result) {
 			this.close();
@@ -145,10 +148,8 @@ export default class RenamePopup extends EventDispatchable {
 	 * ディレクトリ名を変更する
 	 */
 	async _submitSubdirRename() {
-		this.elSubdirInput.disabled = true;
 		const newName = this.elSubdirInput.value;
 		const result = await API.rename(this.subdir, newName);
-		this.elSubdirInput.disabled = false;
 		// ディレクトリ名変更成功時
 		if (result) {
 			this.close();

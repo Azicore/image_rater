@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="user-scalable=no,initial-scale=1,width=device-width">
 <title>Image Rater</title>
 <script type="module">
 import LocalConfig from './modules/LocalConfig.js';
@@ -59,6 +60,10 @@ fileList.on('fileopen', (subdir, file) => {
 // ビューアが閉じられたとき
 viewer.on('close', () => {
 	KeyEventManager.setActiveHandler('default');
+});
+// ビューアでフリック操作が行われたとき
+viewer.on('flick', (direction) => {
+	fileList.openFile(direction);
 });
 // ステータスバーからディレクトリ選択メニューが開かれたとき
 status.on('directorymenuopen', () => {
@@ -135,6 +140,23 @@ rating.on('close', (subdir) => {
 	KeyEventManager.setActiveHandler('default');
 	fileList.update(subdir);
 });
+// モバイル対応
+const onresize = (() => {
+	let isMobile = false;
+	return () => {
+		const resized = window.matchMedia('(max-width: 640px)').matches;
+		if (resized == isMobile) return;
+		isMobile = resized;
+		fileList.isMobile = isMobile;
+		viewer.isMobile = isMobile;
+		rating.isMobile = isMobile;
+		if (fileList.subdir) fileList.update(fileList.subdir);
+	};
+})();
+window.addEventListener('resize', () => {
+	onresize();
+});
+onresize();
 
 </script>
 <link rel="stylesheet" href="style.css">
@@ -168,8 +190,10 @@ rating.on('close', (subdir) => {
 <div id="rating">
 	<div id="rating_property_block">
 		<table id="rating_property"></table>
+		<div id="rating_select_1"></div>
 		<div id="rating_skip" title="スキップ"></div>
 		<div id="rating_close" title="終了"></div>
+		<div id="rating_select_2"></div>
 	</div>
 	<div id="rating_image_block">
 		<div id="rating_image_1"></div>

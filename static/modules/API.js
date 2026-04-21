@@ -4,10 +4,26 @@
 export default class API {
 
 	/**
-	 * 更新系API通信時のローディング表示を切り替える関数
-	 * @type {function}
+	 * 更新系API通信時のローディング表示を切り替える関数の登録
+	 * @param {function} func - 登録する関数
 	 */
-	static toggleLoading = () => {};
+	static set toggleLoading(func) {
+		if (!this._loadingTogglers) this._loadingTogglers = [];
+		this._loadingTogglers.push(func);
+	}
+
+	/**
+	 * 更新系API通信時のローディング表示を切り替える関数
+	 * @return {function} 登録済み関数を全て実行する関数
+	 */
+	static get toggleLoading() {
+		return (toggle, target) => {
+			if (!this._loadingTogglers) return;
+			for (const func of this._loadingTogglers) {
+				func(toggle, target);
+			}
+		};
+	}
 
 	/**
 	 * API通信時のエラーを表示する関数
@@ -130,7 +146,7 @@ export default class API {
 	 * @return {boolean} 成功したかどうか
 	 */
 	static async rename(subdir, newName, fileId) {
-		this.toggleLoading(true);
+		this.toggleLoading(true, 'rename');
 		const result = await this._post('/rename', {
 			dirId: subdir.dirId,
 			subdirId: subdir.subdirId,
@@ -138,7 +154,7 @@ export default class API {
 			newName: newName
 		});
 		if (result.error) this.notifyError(result.message);
-		this.toggleLoading(false);
+		this.toggleLoading(false, 'rename');
 		return !result.error;
 	}
 
@@ -150,7 +166,7 @@ export default class API {
 	 * @return {string[]} fileIdsのうち移動に成功したファイルIDの配列
 	 */
 	static async move(subdir, fileIds, newSubdirId) {
-		this.toggleLoading(true);
+		this.toggleLoading(true, 'move');
 		const result = await this._post('/move', {
 			dirId: subdir.dirId,
 			subdirId: subdir.subdirId,
@@ -159,7 +175,7 @@ export default class API {
 		});
 		const movedFileIds = result.moved || [];
 		if (result.error || result.message) this.notifyError(result.message);
-		this.toggleLoading(false);
+		this.toggleLoading(false, 'move');
 		return movedFileIds;
 	}
 
@@ -171,7 +187,7 @@ export default class API {
 	 * @return {object[]} 次の候補ファイル
 	 */
 	static async rating(subdir, winnerFileId, loserFileId) {
-		this.toggleLoading(true);
+		this.toggleLoading(true, 'rating');
 		const result = await this._post('/rating', {
 			dirId: subdir.dirId,
 			subdirId: subdir.subdirId,
@@ -180,7 +196,7 @@ export default class API {
 		});
 		const next = result.next || [];
 		if (result.error) this.notifyError(result.message);
-		this.toggleLoading(false);
+		this.toggleLoading(false, 'rating');
 		return next;
 	}
 
@@ -192,7 +208,7 @@ export default class API {
 	 * @return {boolean} 成功したかどうか
 	 */
 	static async ratingOperation(subdir, mode, params) {
-		this.toggleLoading(true);
+		this.toggleLoading(true, 'ratingope');
 		const result = await this._post('/ratingope', {
 			dirId: subdir.dirId,
 			subdirId: subdir.subdirId,
@@ -200,7 +216,7 @@ export default class API {
 			params: params
 		});
 		if (result.error) this.notifyError(result.message);
-		this.toggleLoading(false);
+		this.toggleLoading(false, 'ratingope');
 		return !result.error;
 	}
 
@@ -210,13 +226,13 @@ export default class API {
 	 * @return {boolean} 成功したかどうか
 	 */
 	static async removeMissingDirectories(dirId) {
-		this.toggleLoading(true);
+		this.toggleLoading(true, 'cleanup');
 		const result = await this._post('/cleanup', {
 			mode: 'dir',
 			dirId: dirId
 		});
 		if (result.error) this.notifyError(result.message);
-		this.toggleLoading(false);
+		this.toggleLoading(false, 'cleanup');
 		return !result.error;
 	}
 

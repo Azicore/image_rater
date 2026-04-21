@@ -360,7 +360,7 @@ body {
 .rating_property_winner {
 	background: var(--base-selected-color);
 }
-#rating_skip, #rating_close {
+#rating_skip, #rating_close, #rating_select_1, #rating_select_2 {
 	background: var(--status-background);
 	padding: var(--rating-button-padding);
 	border-radius: 50%;
@@ -374,7 +374,10 @@ body {
 #rating_close {
 	right: var(--rating-button-margin);
 }
-#rating_skip::before, #rating_close::before {
+#rating_select_1, #rating_select_2 {
+	display: none;
+}
+#rating_skip::before, #rating_close::before, #rating_select_1::before, #rating_select_2::before {
 	content: '';
 	width: var(--rating-button-size);
 	height: var(--rating-button-size);
@@ -411,6 +414,7 @@ body {
 	align-items: center;
 	justify-content: center;
 	cursor: pointer;
+	box-sizing: border-box;
 }
 #rating_image_block div:hover {
 	border: 2px solid var(--filelist-cursor-color);
@@ -572,4 +576,98 @@ body {
 		--loading-angle: 15deg;
 		transform: rotate(360deg);
 	}
+}
+
+/*************************************************************
+ * モバイルデバイス対応
+ *************************************************************/
+@media screen and (max-width: 640px) {
+
+	/* ステータスバー */
+	#status_file_name, #status_file_props {
+		display: none !important;
+	}
+
+	/* レーティングボタン */
+	#rating_button {
+		border-radius: 14px / 50%;
+		line-height: 28px;
+		position: fixed;
+		right: 0px;
+		bottom: 4px;
+		box-shadow: 0px 0px 4px 1px rgb(255 255 255 / 0.8);
+	}
+	#rating_button.rating_button_disabled {
+		display: none;
+	}
+
+	/* メニュー */
+	.menu_item_nomobile {
+		display: none;
+	}
+
+	/* ファイル一覧 */
+	#filelist {
+		padding-right: 3px;
+		padding-bottom: 3px;
+	}
+	#filelist li {
+		margin: 3px 0px 0px 3px;
+		border: 1px solid transparent;
+	}
+	#filelist li.filelist_selected {
+		border: 1px solid var(--filelist-cursor-color);
+	}
+	#filelist.filelist_rating li::before {
+		width: 6px;
+		height: 6px;
+		right: 2px;
+		top: 2px;
+	}
+	#filelist li.filelist_video::after {
+		--filelist-video-size: 32px;
+	}
+
+	/* レーティング画面 */
+	#rating {
+		flex-flow: row-reverse nowrap;
+		--loading-margin-top: 96px;
+	}
+	#rating_property_block {
+		position: static;
+		display: flex;
+		flex-flow: column nowrap;
+		justify-content: center;
+		align-items: center;
+	}
+	#rating_property {
+		display: none;
+	}
+	#rating_skip, #rating_close, #rating_select_1, #rating_select_2 {
+		margin: 6px 4px;
+		position: static;
+		display: block;
+	}
+	#rating_select_1::before {
+		clip-path: shape(from 50% 0%, line to 100% 60%, line to 70% 60%, line to 70% 100%, line to 30% 100%, line to 30% 60%, line to 0% 60%, close);
+	}
+	#rating_select_2::before {
+		clip-path: shape(from 50% 100%, line to 0% 40%, line to 30% 40%, line to 30% 0%, line to 70% 0%, line to 70% 40%, line to 100% 40%, close);
+	}
+	#rating_image_block {
+		flex-flow: column;
+	}
+	#rating_image_block div {
+		width: auto;
+		height: 50%;
+	}
+	#rating_image_block div:hover {
+		border: 2px solid transparent;
+	}
+
+	/* ディレクトリ一覧 */
+	#dirlist {
+		max-width: calc(100vw - 48px);
+	}
+
 }

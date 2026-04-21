@@ -23,8 +23,13 @@ export default class MediaViewer extends EventDispatchable {
 		 * @type {HTMLVideoElement}
 		 */
 		this.video = null;
+		/**
+		 * モバイル表示かどうか
+		 * @type {boolean}
+		 */
+		this.isMobile = false;
 
-		this._defineEvents('close');
+		this._defineEvents('close', 'flick');
 		this._setEventHandlers();
 		this.container.style.display = 'none';
 		this.container.innerHTML = '';
@@ -35,6 +40,7 @@ export default class MediaViewer extends EventDispatchable {
 	 */
 	_setEventHandlers() {
 		this.container.addEventListener('click', (e) => {
+			if (this.isMobile) return;
 			// クリックしたら閉じる
 			this.close();
 		});
@@ -43,6 +49,40 @@ export default class MediaViewer extends EventDispatchable {
 			if (!document.fullscreenElement) {
 				this.close();
 			}
+		});
+		// タッチ操作
+		let flickStartPoint = null;
+		let flickEndPoint = null;
+		let FLICK_LIMIT = 50;
+		let FLICK_THRESHOLD = 150;
+		this.container.addEventListener('touchstart', (e) => {
+			e = e.touches[0];
+			flickStartPoint = [e.clientX, e.clientY];
+			flickEndPoint = null;
+		});
+		this.container.addEventListener('touchmove', (e) => {
+			e = e.touches[0];
+			flickEndPoint = [e.clientX, e.clientY];
+		});
+		this.container.addEventListener('touchend', (e) => {
+			if (!flickStartPoint || !flickEndPoint) return;
+			const flickX = flickEndPoint[0] - flickStartPoint[0];
+			const flickY = flickEndPoint[1] - flickStartPoint[1];
+			// 横フリックで前後のファイル
+			if (FLICK_LIMIT > Math.abs(flickY)) {
+				if (flickX > FLICK_THRESHOLD) {
+					this.trigger('flick', false);
+				} else if (-FLICK_THRESHOLD > flickX) {
+					this.trigger('flick', true);
+				}
+			// 縦フリックで終了
+			} else if (FLICK_LIMIT > Math.abs(flickX)) {
+				if (Math.abs(flickY) > FLICK_THRESHOLD) {
+					this.close();
+				}
+			}
+			flickStartPoint = null;
+			flickEndPoint = null;
 		});
 		// キーボード操作
 		KeyEventManager.addHandler('viewer', (e) => {

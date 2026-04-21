@@ -39,7 +39,7 @@ export default class MainMenu extends Menu {
 		}, false, true).itemId = 'move';
 		this.addMenuItem('ディレクトリ名を変更…', (item) => {
 			this.trigger('renamesubdir');
-		}, false, true).itemId = 'subdirrename';
+		}, false, true, true).itemId = 'subdirrename';
 		this.addPartitionLine();
 		this.addMenuItem('レーティングと選択重みを交換', (item) => {
 			this.trigger('ratingope', 'exchange');

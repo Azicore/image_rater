@@ -46,6 +46,7 @@ export default class Menu extends EventDispatchable {
 	 * @param {function} handler - 項目選択時のイベントハンドラ
 	 * @param {boolean} [defaultChecked=false] - 初期状態でチェックされているかどうか
 	 * @param {boolean} [defaultDisabled=false] - 初期状態で無効化されているかどうか
+	 * @param {boolean} [mobileHidden=false] - モバイル表示で隠すかどうか
 	 * @return {object} このメニュー項目を表すオブジェクト
 	 * @property {string} name 項目名
 	 * @property {function} handler 項目選択時のイベントハンドラ
@@ -53,10 +54,11 @@ export default class Menu extends EventDispatchable {
 	 * @property {boolean} checked 項目がチェックされているかどうか
 	 * @property {boolean} disabled 項目が無効化されているかどうか
 	 */
-	addMenuItem(name, handler, defaultChecked = false, defaultDisabled = false) {
+	addMenuItem(name, handler, defaultChecked = false, defaultDisabled = false, mobileHidden = false) {
 		const HTML = HtmlGenerator;
 		const id = this.menuItems.length;
 		const elem = HTML.div.end(name);
+		if (mobileHidden) elem.classList.add('menu_item_nomobile');
 		const item = {
 			name: name,
 			handler: handler,
@@ -90,10 +92,12 @@ export default class Menu extends EventDispatchable {
 
 	/**
 	 * メニューの仕切り線を追加する
+	 * @param {boolean} [mobileHidden=false] - モバイル表示で隠すかどうか
 	 */
-	addPartitionLine() {
+	addPartitionLine(mobileHidden = false) {
 		const HTML = HtmlGenerator;
 		const elem = HTML.div.cls('menu_partition menu_item_disabled').end();
+		if (mobileHidden) elem.classList.add('menu_item_nomobile');
 		this.container.appendChild(elem);
 	}
 
