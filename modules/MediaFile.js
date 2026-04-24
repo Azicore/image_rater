@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 import { execFile } from 'child_process';
 import sharp from 'sharp';
 
@@ -10,13 +11,18 @@ export default class MediaFile {
 	/**
 	 * コンストラクタ
 	 * @param {string} filePath - ファイルパス
+	 * @param {string} [basePath] - 基点となるパス
 	 */
-	constructor(filePath) {
+	constructor(filePath, basePath) {
 		/**
 		 * ファイルパス
 		 * @type {string}
 		 */
-		this.filePath = filePath;
+		this.filePath = (() => {
+			if (!basePath) return filePath;
+			filePath = path.join(filePath);
+			return /\.\./.test(filePath) ? null : path.join(basePath, filePath);
+		})();
 	}
 
 	/**
@@ -33,6 +39,24 @@ export default class MediaFile {
 	 */
 	get isVideo() {
 		return /\.mp4$/i.test(this.filePath);
+	}
+
+	/**
+	 * ファイルサイズを返す
+	 * @return {number} ファイルサイズ
+	 */
+	get fileSize() {
+		return fs.statSync(this.filePath, { throwIfNoEntry: false })?.size;
+	}
+
+	/**
+	 * レスポンス用のReadStreamを返す
+	 * @param {numner[]} [range] - 範囲
+	 * @return {ReadStream} ReadStream
+	 */
+	createReadStream(range) {
+		const params = range ? [this.filePath, { start: range[0], end: range[1] }] : [this.filePath];
+		return fs.createReadStream(...params);
 	}
 
 	/**

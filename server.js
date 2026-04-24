@@ -3,6 +3,7 @@ import express from 'express';
 import Config from './modules/Config.js';
 import DirectoryInfo from './modules/DirectoryInfo.js';
 import ThumbnailManager from './modules/ThumbnailManager.js';
+import MediaFile from './modules/MediaFile.js';
 
 const __dirname = import.meta.dirname;
 
@@ -60,7 +61,7 @@ app.get('/thumb/:fileId', async (req, res, next) => {
 	}
 });
 
-// 画像ファイル本体を返す
+// 画像・動画ファイル本体を返す
 app.get('/file/:dirId/:subdirName/:fileName', (req, res, next) => {
 	const { dirId, subdirName, fileName } = req.params;
 	const { path: dirPath } = config.data.directories[dirId] || {};
@@ -68,9 +69,48 @@ app.get('/file/:dirId/:subdirName/:fileName', (req, res, next) => {
 		return res.sendStatus(404);
 	}
 //	console.log(`GET /file/${dirId}/${subdirName}/${fileName}`);
-	res.sendFile(path.join(subdirName, fileName), { root: dirPath }, (err) => {
-		if (err) next(err);
-	});
+	const relPath = path.join(subdirName, fileName);
+	const file = new MediaFile(relPath, dirPath);
+	// パスが不正な場合
+	if (!file.filePath) {
+		res.sendStatus(400);
+	// 画像ファイルの場合
+	} else if (file.isImage) {
+		res.sendFile(relPath, { root: dirPath }, (err) => {
+			if (err) next(err);
+		});
+	// 動画ファイルの場合
+	} else if (file.isVideo) {
+		const fileSize = file.fileSize;
+		if (!fileSize) {
+			// 存在しない場合
+			return res.sendStatus(404);
+		}
+		const range = req.headers.range;
+		// 範囲リクエストの場合
+		if (range) {
+			const parts = range.replace(/bytes=/, '').split('-');
+			const start = parseInt(parts[0], 10);
+			const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+			const chunkSize = end - start + 1;
+			res.writeHead(206, {
+				'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+				'Accept-Ranges': 'bytes',
+				'Content-Length': chunkSize,
+				'Content-Type': 'video/mp4'
+			});
+			file.createReadStream([start, end]).pipe(res);
+		} else {
+			res.writeHead(200, {
+				'Content-Length': fileSize,
+				'Content-Type': 'video/mp4'
+			});
+			file.createReadStream().pipe(res);
+		}
+	} else {
+		// 画像・動画以外の場合
+		res.sendStatus(403);
+	}
 });
 
 // ファイル名・ディレクトリ名を変更する
