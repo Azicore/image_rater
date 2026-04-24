@@ -249,9 +249,6 @@ export default class FileSelector extends EventDispatchable {
 				if (!file.elem) {
 					// 初回は要素を作成
 					file.elem = this._createItemElement(file);
-					// レーティングシンボル
-					const ratingClass = this.ratingSymbol.get(file.r);
-					file.elem.classList.add(`filelist_rating_${ratingClass}`);
 				}
 				file.elem.dataset.itemN = i;
 				this.container.appendChild(file.elem);
@@ -285,7 +282,8 @@ export default class FileSelector extends EventDispatchable {
 	_createItemElement(file) {
 		const HTML = HtmlGenerator;
 		const [tw, th] = this.isMobile ? [Math.round(file.tw * this.MOBILE_SIZE_RATE), Math.round(file.th * this.MOBILE_SIZE_RATE)] : [file.tw, file.th];
-		return HTML.li.data('fileName', file.n).cls(file.isVideo ? 'filelist_video' : []).end(
+		const ratingClass = this.ratingSymbol.get(file.r); // レーティングシンボル
+		return HTML.li.data('fileName', file.n).cls(file.isVideo ? 'filelist_video' : []).cls(`filelist_rating_${ratingClass}`).end(
 			HTML.img.attr({
 				loading: 'lazy', width: tw, height: th,
 				alt: file.n, title: file.n
