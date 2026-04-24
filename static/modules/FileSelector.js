@@ -304,11 +304,13 @@ export default class FileSelector extends EventDispatchable {
 		const movedFileIds = await API.move(this.subdir, fileIds, newSubdir.subdirId);
 		this.selectedFiles.clear();
 		let i = 0;
+		let nextSelected = 0;
 		for (const file of this.files) {
 			if (movedFileIds.includes(file.id)) {
 				const elem = file.elem;
 				this.container.removeChild(elem);
 				delete file.elem;
+				nextSelected = i;
 			} else {
 				file.elem.dataset.itemN = i++;
 			}
@@ -320,7 +322,7 @@ export default class FileSelector extends EventDispatchable {
 			// ファイルなし
 			this.toggleNoFile(true);
 		} else {
-			this.selectedFiles.set(this.elems[0]);
+			this.selectedFiles.set(this.elems[Math.min(this.elems.length - 1, nextSelected)]);
 		}
 		return this.subdir;
 	}
