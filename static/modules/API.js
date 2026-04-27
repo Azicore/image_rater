@@ -67,7 +67,7 @@ export default class API {
 	 * @return {object} 親ディレクトリ一覧（ディレクトリIDをキーとするオブジェクト）
 	 */
 	static async getDirectoryList() {
-		const dirs = await this._get('/dirs');
+		const dirs = await this._get('./dirs');
 		if (dirs.error) {
 			this.notifyError(dirs.message);
 			return {};
@@ -81,7 +81,7 @@ export default class API {
 	 * @return {object[]} サブディレクトリ情報オブジェクトの配列
 	 */
 	static async getSubdirectoryList(dirId) {
-		const subdirs = await this._get(`/dir/${dirId}`);
+		const subdirs = await this._get(`./dir/${dirId}`);
 		if (subdirs.error) {
 			this.notifyError(subdirs.message);
 			return [];
@@ -101,10 +101,10 @@ export default class API {
 		let files;
 		// 通常
 		if (!forceUpdate) {
-			files = await this._get(`/dir/${dirId}/${subdirId}`);
+			files = await this._get(`./dir/${dirId}/${subdirId}`);
 		// サムネイルキャッシュの再構築
 		} else {
-			files = await this._post('/cleanup', {
+			files = await this._post('./cleanup', {
 				mode: 'thumb',
 				dirId: dirId,
 				subdirId: subdirId
@@ -124,7 +124,7 @@ export default class API {
 	 * @return {string} サムネイルを取得するURL
 	 */
 	static getThumbnailURL(fileId) {
-		return `/thumb/${fileId}`;
+		return `./thumb/${fileId}`;
 	}
 
 	/**
@@ -135,7 +135,7 @@ export default class API {
 	 * @return {string} ファイル本体を取得するURL
 	 */
 	static getFileURL(dirId, subdirName, fileName) {
-		return `/file/${dirId}/${subdirName}/${fileName}`;
+		return `./file/${dirId}/${subdirName}/${fileName}`;
 	}
 
 	/**
@@ -147,7 +147,7 @@ export default class API {
 	 */
 	static async rename(subdir, newName, fileId) {
 		this.toggleLoading(true, 'rename');
-		const result = await this._post('/rename', {
+		const result = await this._post('./rename', {
 			dirId: subdir.dirId,
 			subdirId: subdir.subdirId,
 			fileId: fileId,
@@ -167,7 +167,7 @@ export default class API {
 	 */
 	static async move(subdir, fileIds, newSubdirId) {
 		this.toggleLoading(true, 'move');
-		const result = await this._post('/move', {
+		const result = await this._post('./move', {
 			dirId: subdir.dirId,
 			subdirId: subdir.subdirId,
 			fileIds: fileIds,
@@ -188,7 +188,7 @@ export default class API {
 	 */
 	static async rating(subdir, winnerFileId, loserFileId) {
 		this.toggleLoading(true, 'rating');
-		const result = await this._post('/rating', {
+		const result = await this._post('./rating', {
 			dirId: subdir.dirId,
 			subdirId: subdir.subdirId,
 			winnerFileId: winnerFileId,
@@ -209,7 +209,7 @@ export default class API {
 	 */
 	static async ratingOperation(subdir, mode, params) {
 		this.toggleLoading(true, 'ratingope');
-		const result = await this._post('/ratingope', {
+		const result = await this._post('./ratingope', {
 			dirId: subdir.dirId,
 			subdirId: subdir.subdirId,
 			mode: mode,
@@ -227,7 +227,7 @@ export default class API {
 	 */
 	static async removeMissingDirectories(dirId) {
 		this.toggleLoading(true, 'cleanup');
-		const result = await this._post('/cleanup', {
+		const result = await this._post('./cleanup', {
 			mode: 'dir',
 			dirId: dirId
 		});

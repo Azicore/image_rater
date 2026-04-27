@@ -1,38 +1,39 @@
 import path from 'path';
 import express from 'express';
-import Config from './modules/Config.js';
 import DirectoryInfo from './modules/DirectoryInfo.js';
 import ThumbnailManager from './modules/ThumbnailManager.js';
 import MediaFile from './modules/MediaFile.js';
+import { config } from './config.js';
 
 const __dirname = import.meta.dirname;
 
-const SERVER_PORT = 8052; // ウェブサーバーのポート番号
+if (!config) {
+	console.error(`Invalid config: ${process.env.NODE_ENV}`);
+	process.exit(1);
+}
 
-// 設定ファイルの読み込み
-const config = new Config();
-console.log(config.data.settings);
 const thumb = new ThumbnailManager();
 
 const app = express();
+const router = express.Router();
 
-app.use(express.json());
+router.use(express.json());
 
-app.use('/', (req, res, next) => {
+router.use('/', (req, res, next) => {
 	res.set('Cache-Control', 'no-cache');
 	next();
 });
 
 // 登録済み親ディレクトリ一覧を返す
-app.get('/dirs', (req, res, next) => {
+router.get('/dirs', (req, res, next) => {
 	console.log('GET /dirs');
-	res.json(config.data.directories);
+	res.json(config.directories);
 });
 
 // サブディレクトリ一覧・ファイル一覧を返す
-app.get(['/dir/:dirId', '/dir/:dirId/:subdirId'], async (req, res, next) => {
+router.get(['/dir/:dirId', '/dir/:dirId/:subdirId'], async (req, res, next) => {
 	const { dirId, subdirId } = req.params;
-	const { path: dirPath } = config.data.directories[dirId] || {};
+	const { path: dirPath } = config.directories[dirId] || {};
 	if (dirPath == null) {
 		return res.json({ error: true });
 	}
@@ -49,7 +50,7 @@ app.get(['/dir/:dirId', '/dir/:dirId/:subdirId'], async (req, res, next) => {
 });
 
 // サムネイル画像を返す
-app.get('/thumb/:fileId', async (req, res, next) => {
+router.get('/thumb/:fileId', async (req, res, next) => {
 	const { fileId } = req.params;
 	const thumbName = await thumb.get(fileId);
 	if (thumbName) {
@@ -62,9 +63,9 @@ app.get('/thumb/:fileId', async (req, res, next) => {
 });
 
 // 画像・動画ファイル本体を返す
-app.get('/file/:dirId/:subdirName/:fileName', (req, res, next) => {
+router.get('/file/:dirId/:subdirName/:fileName', (req, res, next) => {
 	const { dirId, subdirName, fileName } = req.params;
-	const { path: dirPath } = config.data.directories[dirId] || {};
+	const { path: dirPath } = config.directories[dirId] || {};
 	if (dirPath == null) {
 		return res.sendStatus(404);
 	}
@@ -114,9 +115,9 @@ app.get('/file/:dirId/:subdirName/:fileName', (req, res, next) => {
 });
 
 // ファイル名・ディレクトリ名を変更する
-app.post('/rename', (req, res, next) => {
+router.post('/rename', (req, res, next) => {
 	const { dirId, subdirId, fileId, newName } = req.body;
-	const { path: dirPath } = config.data.directories[dirId] || {};
+	const { path: dirPath } = config.directories[dirId] || {};
 	const dirInfo = new DirectoryInfo(dirPath);
 	try {
 		if (fileId) {
@@ -130,9 +131,9 @@ app.post('/rename', (req, res, next) => {
 });
 
 // ファイルを移動する
-app.post('/move', (req, res, next) => {
+router.post('/move', (req, res, next) => {
 	const { dirId, subdirId, fileIds, newSubdirId } = req.body;
-	const { path: dirPath } = config.data.directories[dirId] || {};
+	const { path: dirPath } = config.directories[dirId] || {};
 	const dirInfo = new DirectoryInfo(dirPath);
 	try {
 		res.json(dirInfo.moveFile(subdirId, fileIds, newSubdirId));
@@ -142,9 +143,9 @@ app.post('/move', (req, res, next) => {
 });
 
 // レーティングを行なう
-app.post('/rating', (req, res, next) => {
+router.post('/rating', (req, res, next) => {
 	const { dirId, subdirId, winnerFileId, loserFileId } = req.body;
-	const { path: dirPath } = config.data.directories[dirId] || {};
+	const { path: dirPath } = config.directories[dirId] || {};
 	const dirInfo = new DirectoryInfo(dirPath);
 	try {
 		res.json(dirInfo.rating(subdirId, winnerFileId, loserFileId));
@@ -154,9 +155,9 @@ app.post('/rating', (req, res, next) => {
 });
 
 // レーティングに関する操作を行なう
-app.post('/ratingope', (req, res, next) => {
+router.post('/ratingope', (req, res, next) => {
 	const { dirId, subdirId, mode, params } = req.body;
-	const { path: dirPath } = config.data.directories[dirId] || {};
+	const { path: dirPath } = config.directories[dirId] || {};
 	const dirInfo = new DirectoryInfo(dirPath);
 	try {
 		res.json(dirInfo.ratingOperation(subdirId, mode, params));
@@ -166,9 +167,9 @@ app.post('/ratingope', (req, res, next) => {
 })
 
 // クリーンアップを行なう
-app.post('/cleanup', async (req, res, next) => {
+router.post('/cleanup', async (req, res, next) => {
 	const { dirId, subdirId, mode } = req.body;
-	const { path: dirPath } = config.data.directories[dirId] || {};
+	const { path: dirPath } = config.directories[dirId] || {};
 	const dirInfo = new DirectoryInfo(dirPath, thumb);
 	try {
 		// 行方不明のディレクトリの削除
@@ -184,7 +185,7 @@ app.post('/cleanup', async (req, res, next) => {
 });
 
 // index.htmlを返す
-app.use('/', (req, res, next) => {
+router.use('/', (req, res, next) => {
 //	if (req.path == '/') {
 		next();
 //	} else {
@@ -192,7 +193,7 @@ app.use('/', (req, res, next) => {
 //	}
 }, express.static(path.join(__dirname, './static/')));
 
-app.use('/', (err, req, res, next) => {
+router.use('/', (err, req, res, next) => {
 	if (res.headersSent) {
 		res.destroy();
 	} else {
@@ -201,6 +202,7 @@ app.use('/', (err, req, res, next) => {
 });
 
 // サーバーを起動
-app.listen(SERVER_PORT);
+app.use(config.prefix, router);
+app.listen(config.port);
 
 console.log('server ok');

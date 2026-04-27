@@ -1,4 +1,4 @@
 node_modules/
-config/config.json
-config/thumbnails.json
-thumbnails/
+config.js
+var/thumbnails.json
+var/thumbnails/

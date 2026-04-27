@@ -17,7 +17,7 @@ export default class ThumbnailManager extends DataFileLoader {
 		 * サムネイルを保管するディレクトリ
 		 * @type {string}
 		 */
-		this.THUMB_DIR = 'thumbnails';
+		this.THUMB_DIR = 'var/thumbnails';
 		/**
 		 * サムネイルの基本サイズ
 		 * @type {number}
@@ -34,7 +34,7 @@ export default class ThumbnailManager extends DataFileLoader {
 		 */
 		this.THUMB_CREATED = 1;
 
-		this._load('config/thumbnails.json');
+		this._load('var/thumbnails.json');
 	}
 
 	/**
