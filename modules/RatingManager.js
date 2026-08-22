@@ -119,19 +119,24 @@ export default class RatingManager {
 	}
 
 	/**
-	 * レーティングの平均値を調整する
+	 * レーティングの平均値を調整し、範囲が広がりすぎている場合は縮小する
 	 */
 	adjust() {
 		let total = 0;
 		let num = 0;
+		let max = -Infinity;
+		let min = Infinity;
 		for (const fileId in this.files) {
-			total += this.files[fileId].r;
+			const r = this.files[fileId].r;
+			total += r;
 			num++;
+			if (r > max) max = r;
+			if (min > r) min = r;
 		}
 		const avg = total / num;
-		const diff = this.constructor.INITIAL_RATING - avg;
+		const ratio = Math.min(1, this.MAX_DIFF / (max - min));
 		for (const fileId in this.files) {
-			this.files[fileId].r += diff;
+			this.files[fileId].r = (this.files[fileId].r - avg) * ratio + this.constructor.INITIAL_RATING;
 		}
 	}
 
