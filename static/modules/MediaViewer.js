@@ -1,6 +1,7 @@
 import EventDispatchable from './EventDispatchable.js';
 import KeyEventManager from './KeyEventManager.js';
 import HtmlGenerator from './HtmlGenerator.js';
+import ImageZoomer from './ImageZoomer.js';
 import API from './API.js';
 
 /**
@@ -33,6 +34,7 @@ export default class MediaViewer extends EventDispatchable {
 		this._setEventHandlers();
 		this.container.style.display = 'none';
 		this.container.innerHTML = '';
+		new ImageZoomer();
 	}
 
 	/**
@@ -56,11 +58,13 @@ export default class MediaViewer extends EventDispatchable {
 		let FLICK_LIMIT = 50;
 		let FLICK_THRESHOLD = 150;
 		this.container.addEventListener('touchstart', (e) => {
+			if (e.touches.length > 1) return;
 			e = e.touches[0];
 			flickStartPoint = [e.clientX, e.clientY];
 			flickEndPoint = null;
 		});
 		this.container.addEventListener('touchmove', (e) => {
+			if (e.touches.length > 1) return;
 			e = e.touches[0];
 			flickEndPoint = [e.clientX, e.clientY];
 		});
@@ -118,7 +122,7 @@ export default class MediaViewer extends EventDispatchable {
 			});
 			this.container.replaceChildren(this.video);
 		} else {
-			const elem = HTML.img.attr({ src: url, alt: file.n, title: file.n }).end();
+			const elem = HTML.img.attr({ src: url, alt: file.n, title: file.n }).cls(ImageZoomer.ZOOMABLE).end();
 			this.container.replaceChildren(elem);
 		}
 		this.container.style.display = 'flex';

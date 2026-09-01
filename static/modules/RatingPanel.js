@@ -2,6 +2,7 @@ import EventDispatchable from './EventDispatchable.js';
 import KeyEventManager from './KeyEventManager.js';
 import HtmlGenerator from './HtmlGenerator.js';
 import FileInfo from './FileInfo.js';
+import ImageZoomer from './ImageZoomer.js';
 import API from './API.js';
 
 /**
@@ -106,6 +107,7 @@ export default class RatingPanel extends EventDispatchable {
 		this._defineEvents('open', 'close');
 		this._setEventHandlers();
 		API.toggleLoading = (toggle, target) => target == 'rating' && this.container.classList.toggle('loading', toggle);
+		new ImageZoomer();
 	}
 
 	/**
@@ -238,7 +240,7 @@ export default class RatingPanel extends EventDispatchable {
 			});
 			this.elRatingImage1.replaceChildren(this.video1);
 		} else {
-			const elem = HTML.img.attr({ src: url1, alt: file1.n, title: file1.n }).end();
+			const elem = HTML.img.attr({ src: url1, alt: file1.n, title: file1.n }).cls(ImageZoomer.ZOOMABLE).end();
 			this.elRatingImage1.replaceChildren(elem);
 		}
 		// 2つ目のファイル
@@ -250,7 +252,7 @@ export default class RatingPanel extends EventDispatchable {
 			});
 			this.elRatingImage2.replaceChildren(this.video2);
 		} else {
-			const elem = HTML.img.attr({ src: url2, alt: file2.n, title: file2.n }).end();
+			const elem = HTML.img.attr({ src: url2, alt: file2.n, title: file2.n }).cls(ImageZoomer.ZOOMABLE).end();
 			this.elRatingImage2.replaceChildren(elem);
 		}
 		// ファイルの情報
